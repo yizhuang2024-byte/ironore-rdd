@@ -5,6 +5,9 @@ import { orgRoutes } from './org.js';
 import { attendantRoutes } from './attendants.js';
 import { recipientRoutes } from './recipients.js';
 import { paymentCodeRoutes } from './payment-codes.js';
+import { scheduleRoutes } from './schedule.js';
+import { leaveRoutes } from './leaves.js';
+import { mobileRoutes } from './mobile.js';
 import { auditRoutes } from './audit.js';
 
 export const registerRoutes: FastifyPluginAsyncZod = async (app) => {
@@ -14,5 +17,8 @@ export const registerRoutes: FastifyPluginAsyncZod = async (app) => {
   await app.register(attendantRoutes);
   await app.register(recipientRoutes);
   await app.register(paymentCodeRoutes);
+  await app.register(scheduleRoutes);
+  await app.register(leaveRoutes);
+  await app.register(mobileRoutes);
   await app.register(auditRoutes);
 };
