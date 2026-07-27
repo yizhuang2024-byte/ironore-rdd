@@ -25,3 +25,4 @@ apps/api/src/generated/
 # test output
 playwright-report/
 test-results/
+e2e/.auth/

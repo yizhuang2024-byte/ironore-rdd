@@ -15,6 +15,13 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    // 建置腳本與設定檔在 Node 環境執行
+    files: ['**/*.{js,mjs,cjs}', '**/*.config.ts', 'scripts/**'],
+    languageOptions: {
+      globals: { ...globals.node },
+    },
+  },
+  {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2023,

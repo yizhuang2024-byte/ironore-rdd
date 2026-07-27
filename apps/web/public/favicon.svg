@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="長照居家服務排班系統">
+  <rect width="512" height="512" rx="96" fill="#0f766e"/>
+  <text x="256" y="272" font-family="'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif"
+        font-size="260" font-weight="700" fill="#ffffff"
+        text-anchor="middle" dominant-baseline="central">照</text>
+</svg>

@@ -1,0 +1,21 @@
+**/node_modules
+**/dist
+**/build
+**/coverage
+**/.git
+**/*.log
+
+# 金鑰絕不進映像檔
+.env
+.env.*
+!.env.example
+
+# Prisma 產生的 client 在映像檔內重新產生
+apps/api/src/generated
+
+# 測試與開發用檔案
+**/*.test.ts
+apps/api/test
+playwright-report
+test-results
+e2e

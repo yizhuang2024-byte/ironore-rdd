@@ -17,7 +17,9 @@
     "db:migrate:deploy": "pnpm --filter @ltc/api db:migrate:deploy",
     "db:reset": "pnpm --filter @ltc/api db:reset",
     "db:seed": "pnpm --filter @ltc/api db:seed",
-    "db:studio": "pnpm --filter @ltc/api db:studio"
+    "db:studio": "pnpm --filter @ltc/api db:studio",
+    "test:e2e": "playwright test",
+    "icons": "node scripts/gen-icons.mjs"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -29,6 +31,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.62.0",
     "eslint": "^10.3.0",
     "globals": "^17.6.0",
     "playwright": "^1.62.0",

@@ -41,8 +41,21 @@ services:
       TZ: UTC
       PORT: 3000
       CORS_ORIGIN: ${CORS_ORIGIN:?請設定前端網域}
+    expose:
+      - '3000'
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # 前端透過 nginx 同源代理至 api，不需跨網域
+        VITE_API_BASE_URL: /api/v1
+    restart: unless-stopped
+    depends_on:
+      - api
     ports:
-      - '3000:3000'
+      - '${WEB_PORT:-8080}:80'
 
 volumes:
   pgdata:

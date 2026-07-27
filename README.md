@@ -106,14 +106,38 @@ docs/                架構、資料模型、規則說明、支付基準來源
 ```bash
 pnpm typecheck              # 全 workspace 型別檢查
 pnpm lint
-pnpm test                   # 單元測試
-pnpm --filter @ltc/shared test -- --coverage   # 衝突引擎覆蓋率（門檻 90%）
+pnpm test                   # 單元 176 個 + API 整合 29 個
+pnpm --filter @ltc/shared exec vitest run --coverage   # 衝突引擎覆蓋率（門檻 90%）
 pnpm build
+
+# E2E（需先啟動 pnpm dev 且資料庫已 seed）
+pnpm test:e2e               # Playwright 17 個，管理端 + 行動端
 
 ./scripts/dev-db.sh start|stop|status|reset-test
 pnpm db:migrate             # 開發用 migration
 pnpm db:studio              # Prisma Studio
+pnpm icons                  # 由 favicon.svg 重新產生 PWA 圖示
 ```
+
+## 測試
+
+| 層 | 數量 | 涵蓋 |
+|---|---|---|
+| 單元（`packages/shared`） | 176 | 衝突引擎 R01–R22 每條 ≥3 案例、給付計算、時區、路程估算 |
+| 整合（`apps/api/test`） | 29 | 跨單位隔離、個資遮罩與稽核、排班強制點、DB 排他約束 |
+| E2E（`e2e/`） | 17 | 登入、排班虛擬捲動、R01 擋下、個資遮罩、行動端 |
+
+E2E 以 Playwright 的 `storageState` 共用工作階段 —— 每個測試各自登入會撞上登入端點的節流（同 IP 10 次/分鐘），而那是防暴力破解的必要機制，不該為了測試放寬。
+
+## 部署
+
+```bash
+# 需先設定 .env（金鑰、資料庫帳密、CORS_ORIGIN）
+docker compose up -d --build
+# web → :8080（nginx，同源代理 /api 至後端）
+```
+
+`apps/api/Dockerfile` 與 `apps/web/Dockerfile` 皆為多階段建置，執行時不以 root 身分執行。
 
 ## 環境需求
 
