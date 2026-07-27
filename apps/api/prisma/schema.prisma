@@ -1,0 +1,817 @@
+// 長照居家服務 排班暨個案管理系統 — 資料模型
+//
+// 設計原則：
+//  1. 所有時刻欄位一律 timestamptz 並以 UTC 儲存，僅顯示層轉 Asia/Taipei。
+//  2. serviceDate 為刻意的冗餘欄位（台北日曆日），供月結、七休一、日工時走索引。
+//  3. 個資（身分證、地址、病史）以應用層 AES-256-GCM 加密存 Bytes，
+//     另存 blind index（HMAC-SHA256）供唯一性檢查與精確查詢。
+//  4. 支付基準依「生效日期」版本化 —— 同一次法規修正的不同碼別施行日期可能不同。
+//  5. ServiceVisit 為實體化列（非 RRULE），才能用 PostgreSQL EXCLUDE 約束
+//     在 DB 層擋住並行寫入造成的重疊排班。見 migrations 中的手寫 SQL。
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────────────────────
+// 機構 / 組織
+// ─────────────────────────────────────────────────────────────
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  taxId     String   @unique /// 統一編號
+  ltcCode   String? /// 長照特約單位代碼（申報用）
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  units  ServiceUnit[]
+  users  User[]
+  policy OrgPolicy?
+}
+
+/// 服務單位（日照中心 / 居服督導組）
+model ServiceUnit {
+  id           String   @id @default(uuid())
+  orgId        String
+  name         String
+  unitType     UnitType @default(HOME_CARE)
+  serviceAreas String[] /// 負責行政區代碼
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+}
+
+enum UnitType {
+  DAY_CARE
+  HOME_CARE
+}
+
+/// 機構政策參數。
+/// ⚠️ 勞基法適用細節（尤其「趟間空檔是否計入工時」）在長照產業長年有爭議，
+///    本表所有數值皆為「機構政策設定」，非系統認定之法律見解。
+///    上線前須由機構人資／法務書面確認。詳見 docs/03-conflict-rules.md。
+model OrgPolicy {
+  id    String @id @default(uuid())
+  orgId String @unique
+
+  // ── 工時（勞基法）──
+  normalDailyMinutes    Int           @default(480) /// §30 日正常工時 8h
+  maxDailyMinutes       Int           @default(720) /// §32 延長後單日總計上限 12h
+  normalWeeklyMinutes   Int           @default(2400) /// §30 週正常工時 40h
+  monthlyOtMode         MonthlyOtMode @default(STANDARD_46)
+  monthlyOtMinutes      Int           @default(2760) /// §32 II 月延長工時 46h
+  flexOtMonthMinutes    Int           @default(3240) /// 彈性制單月 54h
+  flexOtQuarterMinutes  Int           @default(8280) /// 彈性制三個月 138h
+  restBreakAfterMinutes Int           @default(240) /// §35 連續工作逾 4h
+  restBreakMinutes      Int           @default(30) /// §35 應有 30 分鐘休息
+  minShiftGapMinutes    Int           @default(660) /// §34 輪班間隔 11h（居服是否適用有爭議 → 僅 WARN）
+  enforceSevenDayRest   Boolean       @default(true) /// §36 七休一
+
+  /// 趟與趟之間的空檔 ≤ 此值者計入工時，> 此值者不計。
+  /// 這是本系統最具爭議的參數 —— 引擎會同時回傳 strict/loose 兩種工時供並陳。
+  idleGapCountsAsWorkThresholdMinutes Int @default(60)
+
+  // ── 路程估算（Phase 1 不依賴任何付費地圖 API）──
+  detourFactor            Float @default(1.35) /// 直線距離 → 實際路網的迂迴係數
+  speedKmhUrbanCore       Float @default(15)
+  speedKmhUrban           Float @default(20)
+  speedKmhSuburban        Float @default(30)
+  parkingBufferMinutes    Int   @default(8) /// 停車、找門牌、上樓
+  sameDistrictMinutes     Int   @default(15) /// 無座標時的退回值
+  adjacentDistrictMinutes Int   @default(30)
+  farDistrictMinutes      Int   @default(45)
+
+  // ── 金額計算 ──
+  roundingMode RoundingMode @default(HALF_UP)
+
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+enum MonthlyOtMode {
+  STANDARD_46 /// 每月 46 小時
+  FLEX_54_138 /// 經工會或勞資會議同意：單月 54h / 三個月 138h
+}
+
+enum RoundingMode {
+  HALF_UP
+  FLOOR
+  CEIL
+}
+
+// ─────────────────────────────────────────────────────────────
+// 使用者、角色、工作階段
+// ─────────────────────────────────────────────────────────────
+
+model User {
+  id           String     @id @default(uuid())
+  orgId        String
+  account      String
+  passwordHash String
+  displayName  String
+  phone        String?
+  email        String?
+  status       UserStatus @default(ACTIVE)
+  mustChangePw Boolean    @default(true)
+  failedLogins Int        @default(0)
+  lockedUntil  DateTime?  @db.Timestamptz(6)
+  lastLoginAt  DateTime?  @db.Timestamptz(6)
+  createdAt    DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime   @updatedAt @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  roles        UserRole[]
+  sessions     Session[]
+  attendant    Attendant?
+
+  @@unique([orgId, account])
+  @@index([orgId, status])
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  RESIGNED
+}
+
+/// 使用者可有多個角色，且角色可綁定單位（unitId = null 表示全機構範圍）
+model UserRole {
+  id     String  @id @default(uuid())
+  userId String
+  role   Role
+  unitId String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role, unitId])
+  @@index([userId])
+}
+
+enum Role {
+  ORG_ADMIN /// 管理者：全機構讀寫、支付基準版本管理、稽核查詢
+  SUPERVISOR /// 督導：主責個案 + 所屬單位照服員的讀寫，可覆寫排班 BLOCK
+  ADMIN_STAFF /// 行政：主檔建檔、全單位讀，不可覆寫
+  ATTENDANT /// 照服員：僅自己的班表與請假
+  AUDITOR /// 稽核：全機構唯讀，無 PII 明文
+}
+
+/// DB-backed opaque session（非無狀態 JWT）。
+/// 理由：照服員手機遺失時督導須能即時撤銷該裝置 —— 這是個資法「設備遺失應變措施」的實質要求。
+model Session {
+  id          String    @id @default(uuid())
+  userId      String
+  tokenHash   String    @unique /// SHA-256(random 32 bytes)
+  deviceLabel String?
+  ipAddress   String?
+  userAgent   String?
+  expiresAt   DateTime  @db.Timestamptz(6)
+  revokedAt   DateTime? @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(6)
+  lastSeenAt  DateTime  @default(now()) @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+// ─────────────────────────────────────────────────────────────
+// 照服員
+// ─────────────────────────────────────────────────────────────
+
+model Attendant {
+  id         String  @id @default(uuid())
+  orgId      String
+  userId     String? @unique /// 可先建人事資料、之後再開帳號
+  employeeNo String
+  name       String
+
+  // 個資 —— 加密欄位 + blind index
+  nationalIdEnc        Bytes?
+  nationalIdBidx       String?
+  nationalIdKeyVersion Int       @default(1) /// 金鑰輪替預留
+  birthDate            DateTime? @db.Date
+  gender               Gender?
+  phone                String
+  addressEnc           Bytes?
+
+  // 地理（首/末趟路程估算）
+  homeDistrict String?
+  homeLat      Float?
+  homeLng      Float?
+
+  employmentType EmploymentType
+  hiredOn        DateTime        @db.Date
+  resignedOn     DateTime?       @db.Date
+  status         AttendantStatus @default(ACTIVE)
+  primaryUnitId  String?
+
+  // 工時上限（可覆寫機構預設；部分工時照服員以契約值為準，法定上限仍套用）
+  maxDailyMinutes     Int @default(480)
+  maxWeeklyMinutes    Int @default(2400)
+  maxMonthlyOtMinutes Int @default(2760)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  user           User?                  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  serviceAreas   AttendantServiceArea[]
+  availabilities AttendantAvailability[]
+  certifications Certification[]
+  visits         ServiceVisit[]
+  leaves         LeaveRequest[]
+
+  @@unique([orgId, employeeNo])
+  @@unique([orgId, nationalIdBidx])
+  @@index([orgId, status])
+  @@index([orgId, primaryUnitId, status])
+}
+
+enum Gender {
+  M
+  F
+  OTHER
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  HOURLY
+  DISPATCH
+}
+
+enum AttendantStatus {
+  ACTIVE
+  ON_LEAVE
+  RESIGNED
+}
+
+/// 可服務行政區
+model AttendantServiceArea {
+  id           String @id @default(uuid())
+  attendantId  String
+  districtCode String
+  priority     Int    @default(1) /// 1 = 主要區、2 = 支援區
+
+  attendant Attendant @relation(fields: [attendantId], references: [id], onDelete: Cascade)
+
+  @@unique([attendantId, districtCode])
+  @@index([districtCode])
+}
+
+/// 每週可服務時段（週期性）。分鐘自午夜起算，避免時區換算坑。
+model AttendantAvailability {
+  id          String @id @default(uuid())
+  attendantId String
+  weekday     Int /// 0 = 週日 … 6 = 週六
+  startMinute Int
+  endMinute   Int
+
+  attendant Attendant @relation(fields: [attendantId], references: [id], onDelete: Cascade)
+
+  @@index([attendantId, weekday])
+}
+
+/// 證照 / 訓練 / 體檢
+model Certification {
+  id          String    @id @default(uuid())
+  attendantId String
+  certType    CertType
+  certNo      String?
+  issuedOn    DateTime? @db.Date
+  expiresOn   DateTime? @db.Date /// null = 無期限
+  fileUrl     String?
+  createdAt   DateTime  @default(now()) @db.Timestamptz(6)
+
+  attendant Attendant @relation(fields: [attendantId], references: [id], onDelete: Cascade)
+
+  @@index([attendantId, certType])
+  @@index([expiresOn])
+}
+
+enum CertType {
+  CARE_ATTENDANT_TRAINING /// 照顧服務員訓練結業證明
+  CARE_ATTENDANT_LICENSE /// 照顧服務員單一級技術士
+  IN_SERVICE_TRAINING /// 在職訓練時數
+  HEALTH_CHECK /// 體檢
+  CPR_FIRST_AID
+  BATH_VEHICLE /// 到宅沐浴車訓練
+  DEMENTIA_CARE /// 失智照護訓練
+  FOOT_CARE /// 足部照護
+  DRIVER_LICENSE
+}
+
+// ─────────────────────────────────────────────────────────────
+// 個案 / 服務對象
+// ─────────────────────────────────────────────────────────────
+
+model CareRecipient {
+  id        String  @id @default(uuid())
+  orgId     String
+  caseNo    String /// 機構內案號
+  ltcCaseNo String? /// 照管中心個案編號
+  name      String
+
+  // 個資 —— 加密欄位
+  nationalIdEnc        Bytes?
+  nationalIdBidx       String?
+  nationalIdKeyVersion Int       @default(1)
+  birthDate            DateTime? @db.Date
+  gender               Gender?
+  phone                String?
+  addressEnc           Bytes?
+
+  // 地理（非機敏，供排班篩選與路程估算）
+  districtCode   String
+  lat            Float?
+  lng            Float?
+  geocodeQuality GeocodeQuality @default(NONE)
+
+  // 長照屬性
+  cmsLevel       Int /// CMS 失能等級 2–8
+  copayCategory  CopayCategory
+  disabilityCert Boolean        @default(false)
+  isIndigenous   Boolean        @default(false)
+  remoteAreaTier RemoteAreaTier @default(NONE) /// 影響採用 price 或 priceRemote
+
+  serviceStartOn DateTime        @db.Date
+  serviceEndOn   DateTime?       @db.Date
+  status         RecipientStatus @default(ACTIVE)
+  primaryUnitId  String?
+  supervisorId   String? /// 主責督導 User.id
+
+  // 個資法 §6 特種個資 —— 加密，且僅主責督導與管理者可讀
+  medicalNotesEnc Bytes?
+  careNotesEnc    Bytes?
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  contacts       RecipientContact[]
+  unavailability RecipientUnavailability[]
+  carePlans      CarePlan[]
+  patterns       RecurringPattern[]
+  visits         ServiceVisit[]
+
+  @@unique([orgId, caseNo])
+  @@unique([orgId, nationalIdBidx])
+  @@index([orgId, status, districtCode])
+  @@index([supervisorId, status])
+  @@index([orgId, primaryUnitId, status])
+  @@index([orgId, cmsLevel])
+}
+
+enum RecipientStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
+/// 部分負擔身分別。實際比率存於 CopayRate（依支付基準版本），此處僅為分類。
+enum CopayCategory {
+  GENERAL /// 一般戶
+  LOW_MID_INCOME /// 中低收入戶
+  LOW_INCOME /// 低收入戶
+}
+
+enum RemoteAreaTier {
+  NONE
+  REMOTE
+  MOUNTAIN_ISLAND
+}
+
+enum GeocodeQuality {
+  NONE
+  DISTRICT_CENTROID
+  ROOFTOP
+  MANUAL
+}
+
+model RecipientContact {
+  id          String  @id @default(uuid())
+  recipientId String
+  name        String
+  relation    String
+  phone       String
+  isPrimary   Boolean @default(false)
+
+  recipient CareRecipient @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId])
+}
+
+/// 個案不可服務時段（就醫日、家屬在家日）
+model RecipientUnavailability {
+  id           String    @id @default(uuid())
+  recipientId  String
+  weekday      Int? /// 週期性
+  specificDate DateTime? @db.Date /// 或單一日期
+  startMinute  Int
+  endMinute    Int
+  reason       String?
+
+  recipient CareRecipient @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// 長照給付及支付基準（依生效日期版本化）
+// ─────────────────────────────────────────────────────────────
+
+/// 一個公告版本。
+/// ⚠️ 版本化是必要的而非過度設計：《長期照顧服務申請及給付辦法》114.06.19 修正中，
+///    BA08 / BA09 / BA09a 等碼別自 115.01.01 施行，而該辦法最後施行日為 115.07.01 ——
+///    同一次修正的不同碼別施行日期不同。寫死碼表必然算錯歷史金額。
+model PaymentSchedule {
+  id            String    @id @default(uuid())
+  name          String
+  effectiveFrom DateTime  @db.Date
+  effectiveTo   DateTime? @db.Date /// null = 現行
+  sourceRef     String? /// 公告文號 / 來源 URL
+  isActive      Boolean   @default(false)
+  createdAt     DateTime  @default(now()) @db.Timestamptz(6)
+
+  items      PaymentItem[]
+  quotas     CmsQuota[]
+  copayRates CopayRate[]
+  carePlans  CarePlan[]
+
+  @@index([effectiveFrom])
+}
+
+/// 服務項目代碼主檔 —— 對應附表四「照顧組合表」
+model PaymentItem {
+  id          String          @id @default(uuid())
+  scheduleId  String
+  code        String /// BA01 / BA02 / AA01 / D01 …
+  category    PaymentCategory
+  name        String
+  description String?
+
+  price       Int /// 給付價格（元，整數）
+  priceRemote Int? /// 原民區或離島支付價格（附表四第二價格欄）
+
+  unitType        PaymentUnitType @default(PER_TIME)
+  standardMinutes Int? /// 標準服務時長，排班時距預設
+  minMinutes      Int?
+  maxPerDay       Int? /// 同日次數上限；1 = 同日不可重複
+  maxPerMonth     Int?
+
+  isAddOn      Boolean @default(false) /// 加計項目（夜間/假日/困難服務），不可單獨排班
+  addOnPercent Int? /// 若為百分比加成而非定額 —— 實際規則需向公告確認
+
+  requiredCerts CertType[] /// 提供此項目所需之證照
+  isActive      Boolean    @default(true)
+
+  schedule      PaymentSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  carePlanItems CarePlanItem[]
+  visitItems    VisitItem[]
+
+  @@unique([scheduleId, code])
+  @@index([scheduleId, category])
+}
+
+/// 給付類別。各類別各有獨立額度池，互不流用。
+enum PaymentCategory {
+  CARE_PROFESSIONAL /// 照顧及專業服務（BA/AA…）— Phase 1 主戰場
+  TRANSPORT /// 交通接送
+  ASSISTIVE_DEVICE /// 輔具及居家無障礙環境改善
+  RESPITE /// 喘息服務
+}
+
+enum PaymentUnitType {
+  PER_TIME
+  PER_HOUR
+  PER_DAY
+  PER_ITEM
+}
+
+/// CMS 等級 × 給付類別 → 每月給付額度
+model CmsQuota {
+  id            String          @id @default(uuid())
+  scheduleId    String
+  cmsLevel      Int
+  category      PaymentCategory
+  monthlyAmount Int
+
+  schedule PaymentSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@unique([scheduleId, cmsLevel, category])
+}
+
+/// 部分負擔比率（身分別 × 給付類別）。
+/// 以千分比整數儲存（160 = 16%）避免浮點誤差。
+model CopayRate {
+  id            String          @id @default(uuid())
+  scheduleId    String
+  copayCategory CopayCategory
+  category      PaymentCategory
+  ratePermille  Int
+
+  schedule PaymentSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@unique([scheduleId, copayCategory, category])
+}
+
+// ─────────────────────────────────────────────────────────────
+// 照顧計畫
+// ─────────────────────────────────────────────────────────────
+
+/// 照管中心核定之照顧計畫。
+/// cmsLevel / copayCategory / scheduleId / monthlyQuota 皆為核定當下的快照 ——
+/// 個案身分別日後變更不得追溯影響歷史帳務。
+model CarePlan {
+  id            String    @id @default(uuid())
+  recipientId   String
+  planNo        String?
+  version       Int       @default(1)
+  effectiveFrom DateTime  @db.Date
+  effectiveTo   DateTime? @db.Date
+
+  cmsLevel      Int
+  copayCategory CopayCategory
+  scheduleId    String
+  monthlyQuota  Int /// 由 CmsQuota 帶入，但允許人工覆寫
+
+  status     CarePlanStatus @default(DRAFT)
+  approvedBy String?
+  createdAt  DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime       @updatedAt @db.Timestamptz(6)
+
+  recipient CareRecipient   @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  schedule  PaymentSchedule @relation(fields: [scheduleId], references: [id])
+  items     CarePlanItem[]
+
+  @@index([recipientId, status])
+  @@index([effectiveFrom, effectiveTo])
+}
+
+enum CarePlanStatus {
+  DRAFT
+  ACTIVE
+  SUPERSEDED
+  TERMINATED
+}
+
+/// 核定項目與次數
+model CarePlanItem {
+  id            String @id @default(uuid())
+  carePlanId    String
+  paymentItemId String
+  code          String /// 冗餘快照，便於查詢與歷史保存
+
+  approvedPerMonth Int
+  approvedPerWeek  Int?
+  preferredMinutes Int?
+  note             String?
+
+  carePlan    CarePlan    @relation(fields: [carePlanId], references: [id], onDelete: Cascade)
+  paymentItem PaymentItem @relation(fields: [paymentItemId], references: [id])
+
+  @@unique([carePlanId, paymentItemId])
+  @@index([carePlanId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// 排班
+// ─────────────────────────────────────────────────────────────
+
+/// 週期性排班樣板。僅為 ServiceVisit 的產生器，不是真相來源。
+model RecurringPattern {
+  id              String    @id @default(uuid())
+  recipientId     String
+  attendantId     String? /// 固定照服員；null = 待排
+  weekday         Int
+  startMinute     Int
+  durationMinutes Int
+  itemCodes       String[] /// 該趟提供之支付項目代碼
+  effectiveFrom   DateTime  @db.Date
+  effectiveTo     DateTime? @db.Date
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now()) @db.Timestamptz(6)
+
+  recipient CareRecipient @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, isActive])
+  @@index([attendantId, weekday])
+}
+
+/// ★ 一趟服務 = 排班的原子單位。
+/// 實體化（而非 RRULE 即時展開）是刻意選擇 —— 見檔首說明第 5 點。
+model ServiceVisit {
+  id              String  @id @default(uuid())
+  orgId           String
+  unitId          String?
+  recipientId     String
+  attendantId     String? /// null = 未排班（待指派佇列）
+  sourcePatternId String?
+
+  serviceDate    DateTime @db.Date /// 台北日曆日（冗餘欄位，供月結/七休一走索引）
+  startAt        DateTime @db.Timestamptz(6)
+  endAt          DateTime @db.Timestamptz(6)
+  plannedMinutes Int
+
+  status          VisitStatus @default(UNASSIGNED)
+  cancelReason    String?
+  substituteForId String? /// 代班：指向原班
+
+  // 路程（排班時估算；Phase 2 由實際打卡校正）
+  travelFromVisitId String?
+  estTravelMinutes  Int?
+
+  // 衝突檢核結果快照，供列表快速上色。非真相來源 —— 真相是即時重跑引擎。
+  conflictSummary Json?
+  overriddenBy    String?
+  overrideReason  String?
+
+  lockedAt  DateTime? @db.Timestamptz(6) /// 已申報/結算後鎖定，樣板重生不覆蓋
+  createdBy String
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
+
+  recipient CareRecipient  @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  attendant Attendant?     @relation(fields: [attendantId], references: [id], onDelete: SetNull)
+  items     VisitItem[]
+  record    ServiceRecord?
+
+  @@index([orgId, serviceDate])
+  @@index([attendantId, serviceDate])
+  @@index([recipientId, serviceDate])
+  @@index([attendantId, startAt, endAt])
+  @@index([orgId, status, serviceDate])
+  @@index([unitId, serviceDate])
+  @@index([sourcePatternId, serviceDate])
+}
+
+enum VisitStatus {
+  UNASSIGNED
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+/// 該趟預計提供之支付項目。
+/// unitPrice 是排班當下的價格快照 —— 支付基準改版後歷史金額不被追溯改動。
+model VisitItem {
+  id            String @id @default(uuid())
+  visitId       String
+  paymentItemId String
+  code          String
+  quantity      Int    @default(1)
+  unitPrice     Int
+  amount        Int
+
+  visit       ServiceVisit @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  paymentItem PaymentItem  @relation(fields: [paymentItemId], references: [id])
+
+  @@unique([visitId, paymentItemId])
+  @@index([visitId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// 請假 / 代班
+// ─────────────────────────────────────────────────────────────
+
+model LeaveRequest {
+  id          String      @id @default(uuid())
+  attendantId String
+  leaveType   LeaveType
+  startAt     DateTime    @db.Timestamptz(6)
+  endAt       DateTime    @db.Timestamptz(6)
+  reason      String?
+  status      LeaveStatus @default(PENDING)
+  approvedBy  String?
+  approvedAt  DateTime?   @db.Timestamptz(6)
+  createdAt   DateTime    @default(now()) @db.Timestamptz(6)
+
+  attendant Attendant @relation(fields: [attendantId], references: [id], onDelete: Cascade)
+
+  @@index([attendantId, startAt, endAt])
+  @@index([status])
+}
+
+enum LeaveType {
+  ANNUAL
+  PERSONAL
+  SICK
+  MENSTRUAL
+  OFFICIAL
+  BEREAVEMENT
+  MARRIAGE
+  MATERNITY
+  OTHER
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+// ─────────────────────────────────────────────────────────────
+// 服務紀錄（案件回報）—— Phase 2 使用，Phase 1 先建表
+// ─────────────────────────────────────────────────────────────
+
+model ServiceRecord {
+  id      String @id @default(uuid())
+  visitId String @unique
+
+  checkInAt      DateTime?    @db.Timestamptz(6)
+  checkInLat     Float?
+  checkInLng     Float?
+  checkInMethod  CheckMethod?
+  checkOutAt     DateTime?    @db.Timestamptz(6)
+  checkOutLat    Float?
+  checkOutLng    Float?
+  checkOutMethod CheckMethod?
+
+  actualMinutes Int?
+  gpsDeviationM Int? /// 與個案地址距離，供異常判定
+  actualItems   Json? /// 實際執行之支付代碼與數量
+
+  narrative    String?
+  abnormalFlag Boolean  @default(false)
+  abnormalNote String?
+  signatureUrl String? /// 個案/家屬簽收
+  photoUrls    String[]
+
+  offlineClientId String? @unique /// ★ PWA 離線補傳冪等鍵
+
+  submittedAt  DateTime?          @db.Timestamptz(6)
+  syncedAt     DateTime?          @db.Timestamptz(6)
+  reviewStatus RecordReviewStatus @default(PENDING)
+  reviewedBy   String?
+  reviewedAt   DateTime?          @db.Timestamptz(6)
+
+  visit ServiceVisit @relation(fields: [visitId], references: [id], onDelete: Cascade)
+
+  @@index([reviewStatus])
+}
+
+enum CheckMethod {
+  GPS
+  NFC
+  QR
+  MANUAL
+  PHONE
+}
+
+enum RecordReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  AMENDED
+}
+
+// ─────────────────────────────────────────────────────────────
+// 稽核紀錄（個資法安全維護要求）
+// ─────────────────────────────────────────────────────────────
+
+/// 不可竄改 —— migration 中已 REVOKE UPDATE/DELETE。
+/// 敏感欄位的異動只記欄位名，不記值。
+model AuditLog {
+  id                 BigInt      @id @default(autoincrement())
+  orgId              String
+  actorUserId        String?
+  actorRole          String?
+  action             AuditAction
+  entityType         String
+  entityId           String?
+  subjectRecipientId String? /// 被存取之個案，供個資查詢軌跡
+  changes            Json?
+  ipAddress          String?
+  userAgent          String?
+  requestId          String?
+  createdAt          DateTime    @default(now()) @db.Timestamptz(6)
+
+  @@index([orgId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([entityType, entityId])
+  @@index([subjectRecipientId, createdAt])
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  READ
+  EXPORT
+  LOGIN
+  LOGIN_FAILED
+  LOGOUT
+  OVERRIDE
+}

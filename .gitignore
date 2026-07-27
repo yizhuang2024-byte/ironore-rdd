@@ -1,24 +1,27 @@
-# Logs
-logs
+node_modules/
+dist/
+build/
+coverage/
+
+# env — 個資金鑰絕不進版控
+.env
+.env.*
+!.env.example
+
+# logs
 *.log
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
+# editors / OS
+.DS_Store
+.idea/
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+
+# prisma generated client
+apps/api/src/generated/
+
+# test output
+playwright-report/
+test-results/

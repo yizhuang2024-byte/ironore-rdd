@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    // shared 為零框架依賴的純 TS package，前端亦直接匯入原始碼，
+    // 故不引入 node 型別，避免意外使用只存在於 Node 的 API。
+    "types": []
+  },
+  "include": ["src/**/*"]
+}
