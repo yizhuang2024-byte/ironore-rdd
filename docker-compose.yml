@@ -1,0 +1,48 @@
+# 正式部署用。
+#
+# 本機開發不使用此檔 —— 容器環境中 Docker daemon 未必可用，
+# 開發改用系統安裝的 PostgreSQL（見 ./scripts/dev-db.sh）。
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ltc}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?請設定 POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-ltc}
+      TZ: UTC
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-ltc}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # ⚠️ 應用程式的資料庫帳號不得為 superuser，
+      #    否則 AuditLog 的 REVOKE UPDATE/DELETE 不會生效
+      DATABASE_URL: postgresql://${APP_DB_USER:?請設定}:${APP_DB_PASSWORD:?請設定}@postgres:5432/${POSTGRES_DB:-ltc}
+      PII_ENCRYPTION_KEY: ${PII_ENCRYPTION_KEY:?請以 openssl rand -base64 32 產生}
+      PII_INDEX_KEY: ${PII_INDEX_KEY:?請以 openssl rand -base64 32 產生}
+      SESSION_SECRET: ${SESSION_SECRET:?請設定}
+      NODE_ENV: production
+      TZ: UTC
+      PORT: 3000
+      CORS_ORIGIN: ${CORS_ORIGIN:?請設定前端網域}
+    ports:
+      - '3000:3000'
+
+volumes:
+  pgdata:

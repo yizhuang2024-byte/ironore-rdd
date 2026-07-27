@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { runConflictChecks } from '../engine.js';
 import {
   at,
   makeAttendant,
@@ -17,9 +16,6 @@ import {
   R08_R09_CERTIFICATION,
   R21_STATUS_AND_PERIOD,
 } from './attendant.js';
-
-const only = (rule: Parameters<typeof runConflictChecks>[1] extends never ? never : unknown) => rule;
-void only;
 
 const D = '2026-08-03'; // 週一
 

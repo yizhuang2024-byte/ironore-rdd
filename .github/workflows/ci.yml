@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'claude/**']
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ltc
+          POSTGRES_PASSWORD: ltc
+          POSTGRES_DB: ltc_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://ltc:ltc@localhost:5432/ltc_test
+      # CI 專用金鑰。正式環境的金鑰必須另行產生並妥善保管。
+      PII_ENCRYPTION_KEY: Y2ktb25seS1rZXktMzItYnl0ZXMtZG8tbm90LXVzZSE=
+      PII_INDEX_KEY: Y2ktb25seS1pbmRleC1rZXktMzItYnl0ZXMtbm90LXVzZQ==
+      SESSION_SECRET: ci-only-session-secret-not-for-production
+      TZ: UTC
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: 產生 Prisma client
+        run: pnpm --filter @ltc/api db:generate
+
+      - name: 型別檢查
+        run: pnpm -r typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: 套用 migration
+        run: pnpm --filter @ltc/api db:migrate:deploy
+
+      - name: 驗證 DB 層排他約束
+        # 這條約束是擋並行寫入重疊班次的唯一手段，必須確認它真的存在且生效
+        run: |
+          psql "$DATABASE_URL" -c "
+            SELECT conname FROM pg_constraint
+            WHERE conname = 'service_visit_attendant_no_overlap';
+          " | grep -q service_visit_attendant_no_overlap
+          echo "✓ EXCLUDE 約束已就位"
+
+      - name: 單元測試與覆蓋率（衝突引擎門檻 90%）
+        run: pnpm --filter @ltc/shared exec vitest run --coverage
+
+      - name: 建置
+        run: pnpm -r build

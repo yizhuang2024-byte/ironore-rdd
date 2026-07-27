@@ -28,9 +28,12 @@ import { registerRoutes } from './routes/index.js';
 
 export async function buildServer(): Promise<FastifyInstance> {
   const app = Fastify({
-    logger: isProduction
-      ? true
-      : { transport: { target: 'pino-pretty', options: { translateTime: 'HH:MM:ss' } } },
+    logger:
+      config.NODE_ENV === 'test'
+        ? false
+        : isProduction
+          ? true
+          : { transport: { target: 'pino-pretty', options: { translateTime: 'HH:MM:ss' } } },
     // 反向代理後方需要取得真實 IP 才能寫進稽核紀錄
     trustProxy: true,
     genReqId: () => crypto.randomUUID(),
