@@ -144,6 +144,15 @@ export function scopeFilter(
   return where;
 }
 
+/**
+ * 單位範圍的 Prisma 篩選片段（已具型別）。
+ * 回傳 undefined 表示不限制單位。
+ */
+export function unitScope(user: AuthUser): { in: string[] } | undefined {
+  const units = accessibleUnitIds(user);
+  return units !== null && units.length > 0 ? { in: units } : undefined;
+}
+
 export class ForbiddenError extends Error {
   readonly statusCode = 403;
   readonly code = 'FORBIDDEN';

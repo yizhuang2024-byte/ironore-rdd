@@ -1,0 +1,36 @@
+# ⚠️ 範例資料 —— 不可用於正式申報 ⚠️
+#
+# 本檔僅供開發與測試跑通流程使用。上線前必須由機構申報人員自
+# 衛生福利部公告之《長期照顧服務申請及給付辦法》附表四（照顧組合表）
+# 逐項校對後替換，並於 docs/04-ltc-payment-codes.md 留下校對簽核紀錄。
+#
+# 本檔中經查證的項目僅有：
+#   BA01 基本身體清潔 260 元、BA02 基本日常照顧 195 元、BA08 足部照護 500 元
+#   （BA08 原民區/離島 600 元；BA08/BA09 自 115.01.01 施行）
+# 其餘代碼的名稱、價格、時長與次數限制皆為**佔位值**，必然與公告不符。
+#
+# 欄位對應附表四：碼別 / 照顧組合名稱 / 給付價格 / 原民區或離島支付價格
+#
+code,category,name,description,price,priceRemote,unitType,standardMinutes,maxPerDay,maxPerMonth,isAddOn,requiredCerts
+BA01,CARE_PROFESSIONAL,基本身體清潔,協助沐浴、洗頭、口腔清潔等身體清潔服務,260,312,PER_TIME,60,1,,false,CARE_ATTENDANT_TRAINING
+BA02,CARE_PROFESSIONAL,基本日常照顧,協助進食、如廁、翻身拍背、姿勢擺位等,195,234,PER_TIME,45,,,false,CARE_ATTENDANT_TRAINING
+BA03,CARE_PROFESSIONAL,測量生命徵象,測量體溫、脈搏、呼吸、血壓並記錄,100,120,PER_TIME,15,2,,false,CARE_ATTENDANT_TRAINING
+BA04,CARE_PROFESSIONAL,協助進食或管路餵食,協助經口進食或依指示進行管路灌食,220,264,PER_TIME,45,3,,false,CARE_ATTENDANT_TRAINING
+BA05,CARE_PROFESSIONAL,餐食照顧,備餐、加熱、協助用餐及餐後清理,255,306,PER_TIME,60,2,,false,CARE_ATTENDANT_TRAINING
+BA07,CARE_PROFESSIONAL,協助沐浴及洗頭,於案家協助完整沐浴與洗頭,325,390,PER_TIME,60,1,,false,CARE_ATTENDANT_TRAINING
+BA08,CARE_PROFESSIONAL,足部照護,評估趾甲及足部皮膚、趾甲修剪、足部長繭處理、按摩保養,500,600,PER_TIME,60,1,2,false,FOOT_CARE
+BA09,CARE_PROFESSIONAL,到宅沐浴車服務,以專用車輛攜組合式行動浴槽至案家提供沐浴服務,2500,3000,PER_TIME,90,1,4,false,BATH_VEHICLE
+BA10,CARE_PROFESSIONAL,陪同外出,陪同案主外出處理生活所需事務,215,258,PER_TIME,60,,,false,CARE_ATTENDANT_TRAINING
+BA11,CARE_PROFESSIONAL,陪同就醫,陪同前往醫療院所就醫並協助掛號領藥,685,822,PER_TIME,240,1,4,false,CARE_ATTENDANT_TRAINING
+BA12,CARE_PROFESSIONAL,家務協助,居家環境整理、洗衣、垃圾清運等,195,234,PER_TIME,45,,,false,CARE_ATTENDANT_TRAINING
+BA13,CARE_PROFESSIONAL,代購或代領服務,代購生活必需品、代領物資或藥品,130,156,PER_TIME,30,1,,false,CARE_ATTENDANT_TRAINING
+BA14,CARE_PROFESSIONAL,安全看視,於案主獨處期間提供安全看視,195,234,PER_HOUR,60,,,false,CARE_ATTENDANT_TRAINING
+BA15,CARE_PROFESSIONAL,陪伴服務,提供情緒支持與社會參與陪伴,195,234,PER_HOUR,60,,,false,CARE_ATTENDANT_TRAINING
+BA16,CARE_PROFESSIONAL,協助執行居家運動,依專業人員指導協助案主執行居家復能運動,195,234,PER_TIME,45,1,,false,CARE_ATTENDANT_TRAINING
+BA17,CARE_PROFESSIONAL,認知促進活動,提供失智案主認知促進與延緩失能活動,300,360,PER_TIME,60,1,,false,DEMENTIA_CARE
+BA20,CARE_PROFESSIONAL,巡視服務,短時間到宅確認案主狀況,110,132,PER_TIME,20,2,,false,CARE_ATTENDANT_TRAINING
+BA22,CARE_PROFESSIONAL,協助上下樓梯,協助行動不便者上下樓梯移位,130,156,PER_TIME,20,2,,false,CARE_ATTENDANT_TRAINING
+BA23,CARE_PROFESSIONAL,家庭照顧者指導,指導主要照顧者照顧技巧,400,480,PER_TIME,60,1,2,false,CARE_ATTENDANT_TRAINING
+BA97,CARE_PROFESSIONAL,夜間服務加計,夜間時段（18:00 後）提供服務之加計項目,100,120,PER_TIME,,,,true,
+BA98,CARE_PROFESSIONAL,假日服務加計,例假日提供服務之加計項目,100,120,PER_TIME,,,,true,
+BA99,CARE_PROFESSIONAL,困難服務加計,服務困難個案之加計項目,150,180,PER_TIME,,,,true,

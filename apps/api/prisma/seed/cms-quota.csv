@@ -1,0 +1,17 @@
+# ⚠️ 範例資料 —— 不可用於正式申報 ⚠️
+#
+# CMS 失能等級對應之每月給付額度（照顧及專業服務）。
+# 下列數值取自公開報導的區間（CMS2 約 10,020 元至 CMS8 約 36,180 元），
+# 但**會隨公告年度調整**，且中間各級的實際數值未經逐項查證。
+# 上線前必須以衛福部最新公告為準逐項校對。
+#
+# 長照 2.0 給付對象為 CMS 2–8 級；1 級不提供給付，故不列入。
+#
+cmsLevel,category,monthlyAmount
+2,CARE_PROFESSIONAL,10020
+3,CARE_PROFESSIONAL,15460
+4,CARE_PROFESSIONAL,18580
+5,CARE_PROFESSIONAL,24100
+6,CARE_PROFESSIONAL,28070
+7,CARE_PROFESSIONAL,32090
+8,CARE_PROFESSIONAL,36180

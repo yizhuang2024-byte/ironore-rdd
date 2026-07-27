@@ -1,0 +1,23 @@
+# 部分負擔比率（千分比整數，160 = 16%）
+#
+# 照顧及專業服務的部分負擔比率經查證為：
+#   一般戶 16%、中低收入戶 5%、低收入戶 0%
+# 其餘給付類別（交通接送／輔具／喘息）之比率未經查證，為佔位值，
+# 且 Phase 1 僅實作 CARE_PROFESSIONAL。上線前需依公告校對。
+#
+# ⚠️ 注意：部分負擔僅適用於「核定額度內」的金額。
+#    超出核定額度的部分一律 100% 自費，低收入戶亦然。
+#
+copayCategory,category,ratePermille
+GENERAL,CARE_PROFESSIONAL,160
+LOW_MID_INCOME,CARE_PROFESSIONAL,50
+LOW_INCOME,CARE_PROFESSIONAL,0
+GENERAL,TRANSPORT,270
+LOW_MID_INCOME,TRANSPORT,90
+LOW_INCOME,TRANSPORT,0
+GENERAL,ASSISTIVE_DEVICE,300
+LOW_MID_INCOME,ASSISTIVE_DEVICE,100
+LOW_INCOME,ASSISTIVE_DEVICE,0
+GENERAL,RESPITE,160
+LOW_MID_INCOME,RESPITE,50
+LOW_INCOME,RESPITE,0

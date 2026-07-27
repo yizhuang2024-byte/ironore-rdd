@@ -30,14 +30,22 @@ export const CURRENT_KEY_VERSION = 1;
 
 /**
  * 加密。輸出格式：`[iv(12) | authTag(16) | ciphertext]`
- * 單一 Buffer 便於存入 Prisma 的 Bytes 欄位。
+ * 單一位元組陣列便於存入 Prisma 的 Bytes 欄位。
+ *
+ * 回傳 `Uint8Array<ArrayBuffer>` 而非 Node 的 Buffer —— Prisma 的 Bytes 欄位
+ * 要求前者，而 Buffer 的型別參數是 ArrayBufferLike（可能是 SharedArrayBuffer）。
  */
-export function encryptPii(plaintext: string | null | undefined): Buffer | null {
+export function encryptPii(
+  plaintext: string | null | undefined,
+): Uint8Array<ArrayBuffer> | null {
   if (plaintext == null || plaintext === '') return null;
   const iv = randomBytes(IV_LENGTH);
   const cipher = createCipheriv(ALGORITHM, encryptionKey, iv);
   const ciphertext = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
-  return Buffer.concat([iv, cipher.getAuthTag(), ciphertext]);
+  const combined = Buffer.concat([iv, cipher.getAuthTag(), ciphertext]);
+  const out = new Uint8Array(new ArrayBuffer(combined.length));
+  out.set(combined);
+  return out;
 }
 
 /**
