@@ -66,6 +66,11 @@ export default function Recipients() {
             </span>
           </>
         }
+        actions={
+          <Link to="/recipients/new" className="btn-primary">
+            + 新增個案
+          </Link>
+        }
       />
 
       <div className="card mb-4 flex flex-wrap items-end gap-3 p-4">

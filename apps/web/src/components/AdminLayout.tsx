@@ -4,11 +4,13 @@ import { useAuth } from '../lib/auth.js';
 const NAV = [
   { to: '/', label: '儀表板', end: true, permission: null },
   { to: '/schedule', label: '排班', permission: 'schedule:read' },
+  { to: '/schedule/patterns', label: '排班樣板', permission: 'schedule:read' },
   { to: '/recipients', label: '個案', permission: 'recipient:read' },
   { to: '/attendants', label: '照服員', permission: 'attendant:read' },
   { to: '/leaves', label: '請假審核', permission: 'leave:read' },
   { to: '/payment-codes', label: '支付基準', permission: 'payment:read' },
   { to: '/settings/policy', label: '機構設定', permission: 'org:write' },
+  { to: '/settings/users', label: '使用者', permission: 'user:write' },
   { to: '/audit', label: '稽核紀錄', permission: 'audit:read' },
 ] as const;
 

@@ -103,9 +103,14 @@ export default function AttendantDetail() {
           </span>
         }
         actions={
-          <Link to="/attendants" className="btn-secondary">
-            ← 返回列表
-          </Link>
+          <>
+            <Link to="/attendants" className="btn-secondary">
+              ← 返回列表
+            </Link>
+            <Link to={`/attendants/${a.id}/edit`} className="btn-primary">
+              編輯
+            </Link>
+          </>
         }
       />
 

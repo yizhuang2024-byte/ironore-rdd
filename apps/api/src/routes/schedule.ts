@@ -21,6 +21,7 @@ import {
 } from '@ltc/shared';
 import { buildConflictContext } from '../lib/conflict-context.js';
 import { ConflictCheckError, NotFoundError, ValidationError } from '../lib/errors.js';
+import { boolQuery } from '../lib/query.js';
 import { hasPermission, unitScope } from '../lib/rbac.js';
 import { loadPaymentItems, resolveScheduleId } from '../lib/payment-resolve.js';
 
@@ -49,7 +50,7 @@ export const scheduleRoutes: FastifyPluginAsyncZod = async (app) => {
           attendantId: z.string().optional(),
           recipientId: z.string().optional(),
           status: z.string().optional(),
-          unassignedOnly: z.coerce.boolean().optional(),
+          unassignedOnly: boolQuery.optional(),
           limit: z.coerce.number().int().min(1).max(2000).default(1000),
         }),
       },

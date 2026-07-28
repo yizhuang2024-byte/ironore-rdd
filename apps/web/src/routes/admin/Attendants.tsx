@@ -59,6 +59,11 @@ export default function Attendants() {
       <PageHeader
         title="照服員"
         subtitle={meta ? `共 ${meta.total} 位` : undefined}
+        actions={
+          <Link to="/attendants/new" className="btn-primary">
+            + 新增照服員
+          </Link>
+        }
       />
 
       <div className="card mb-4 flex flex-wrap items-end gap-3 p-4">

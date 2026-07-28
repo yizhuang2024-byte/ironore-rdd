@@ -48,6 +48,50 @@ export class ConflictCheckError extends AppError {
  * 並行寫入時擋下重疊班次的情形 —— 必須轉成人類可讀的訊息，
  * 而不是讓督導撞上一個 500。
  */
+/** 唯一鍵欄位的中文名。沒列到的欄位會原樣顯示，總比顯示「未知欄位」有用。 */
+const DUPLICATE_FIELD_LABELS: Record<string, string> = {
+  caseNo: '機構案號',
+  ltcCaseNo: '照管中心個案編號',
+  employeeNo: '員工編號',
+  account: '帳號',
+  nationalIdBidx: '身分證字號',
+  taxId: '統一編號',
+  code: '支付代碼',
+  planNo: '照顧計畫編號',
+};
+
+/**
+ * 由 P2002 的 meta 取出違反唯一鍵的欄位名。
+ *
+ * Prisma 7 搭配 driver adapter 時「不會」填 `meta.target`，欄位改放在
+ * `meta.driverAdapterError.cause.constraint.fields`，且每個名稱都自帶雙引號。
+ * 只讀 `meta.target` 會讓使用者看到「資料重複：未知欄位」這種等於沒講的訊息。
+ * 兩種形狀都讀，才不會在升級或換 engine 時又退回無用訊息。
+ */
+function duplicateFields(meta: Record<string, unknown> | undefined): string[] {
+  const adapterCause = (
+    meta?.['driverAdapterError'] as { cause?: { constraint?: { fields?: unknown } } } | undefined
+  )?.cause;
+  const adapterFields = adapterCause?.constraint?.fields;
+  if (Array.isArray(adapterFields)) {
+    return adapterFields.map((f) => String(f).replace(/"/g, ''));
+  }
+
+  const target = meta?.['target'];
+  if (Array.isArray(target)) return target.map(String);
+  if (typeof target === 'string') return [target];
+  return [];
+}
+
+function duplicateMessage(meta: Record<string, unknown> | undefined): string {
+  // orgId 幾乎都是複合唯一鍵的一員，但對使用者毫無意義，講了只會混淆
+  const fields = duplicateFields(meta).filter((f) => f !== 'orgId' && f !== 'scheduleId');
+  if (fields.length === 0) return '資料重複，已有相同內容的紀錄';
+
+  const labels = fields.map((f) => DUPLICATE_FIELD_LABELS[f] ?? f);
+  return `${labels.join('、')}已存在，請改用其他值`;
+}
+
 export function translatePgError(err: unknown): AppError | null {
   const code =
     typeof err === 'object' && err !== null && 'code' in err
@@ -82,8 +126,7 @@ export function translatePgError(err: unknown): AppError | null {
 
   // Prisma 唯一鍵衝突
   if (code === 'P2002') {
-    const target = meta?.['target'];
-    return new AppError(409, 'DUPLICATE', `資料重複：${JSON.stringify(target ?? '未知欄位')}`);
+    return new AppError(409, 'DUPLICATE', duplicateMessage(meta));
   }
   // Prisma 找不到記錄
   if (code === 'P2025') {

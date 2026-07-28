@@ -10,13 +10,17 @@ import { Spinner } from './components/ui.js';
 const Dashboard = lazy(() => import('./routes/admin/Dashboard.js'));
 const Attendants = lazy(() => import('./routes/admin/Attendants.js'));
 const AttendantDetail = lazy(() => import('./routes/admin/AttendantDetail.js'));
+const AttendantForm = lazy(() => import('./routes/admin/AttendantForm.js'));
 const Recipients = lazy(() => import('./routes/admin/Recipients.js'));
 const RecipientDetail = lazy(() => import('./routes/admin/RecipientDetail.js'));
+const RecipientForm = lazy(() => import('./routes/admin/RecipientForm.js'));
 const Schedule = lazy(() => import('./routes/admin/Schedule.js'));
+const Patterns = lazy(() => import('./routes/admin/Patterns.js'));
 const Leaves = lazy(() => import('./routes/admin/Leaves.js'));
 const PaymentCodes = lazy(() => import('./routes/admin/PaymentCodes.js'));
 const Audit = lazy(() => import('./routes/admin/Audit.js'));
 const Policy = lazy(() => import('./routes/admin/Policy.js'));
+const Users = lazy(() => import('./routes/admin/Users.js'));
 
 const MobileToday = lazy(() => import('./routes/mobile/Today.js'));
 const MobileSchedule = lazy(() => import('./routes/mobile/Schedule.js'));
@@ -71,13 +75,20 @@ export function App() {
         <Route path="/" element={<AdminLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="attendants" element={<Attendants />} />
+          {/* new 需排在 :id 之前，否則會被當成 id */}
+          <Route path="attendants/new" element={<AttendantForm />} />
+          <Route path="attendants/:id/edit" element={<AttendantForm />} />
           <Route path="attendants/:id" element={<AttendantDetail />} />
           <Route path="recipients" element={<Recipients />} />
+          <Route path="recipients/new" element={<RecipientForm />} />
+          <Route path="recipients/:id/edit" element={<RecipientForm />} />
           <Route path="recipients/:id" element={<RecipientDetail />} />
           <Route path="schedule" element={<Schedule />} />
+          <Route path="schedule/patterns" element={<Patterns />} />
           <Route path="leaves" element={<Leaves />} />
           <Route path="payment-codes" element={<PaymentCodes />} />
           <Route path="settings/policy" element={<Policy />} />
+          <Route path="settings/users" element={<Users />} />
           <Route path="audit" element={<Audit />} />
         </Route>
         <Route path="/login" element={<Navigate to="/" replace />} />

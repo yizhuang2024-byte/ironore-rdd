@@ -134,9 +134,16 @@ export default function RecipientDetail() {
           </span>
         }
         actions={
-          <Link to="/recipients" className="btn-secondary">
-            ← 返回列表
-          </Link>
+          <>
+            <Link to="/recipients" className="btn-secondary">
+              ← 返回列表
+            </Link>
+            {can('recipient:write') && (
+              <Link to={`/recipients/${r.id}/edit`} className="btn-primary">
+                編輯
+              </Link>
+            )}
+          </>
         }
       />
 

@@ -42,7 +42,10 @@ export default defineConfig({
     {
       name: 'admin',
       dependencies: ['setup'],
-      testMatch: /admin\.spec\.ts/,
+      // 桌機端預設收錄所有 spec，只排除行動端專屬的那份。
+      // 若改用列舉檔名，新增的 spec 會安靜地不執行 —— 那比測試失敗更難察覺
+      testMatch: /.*\.spec\.ts/,
+      testIgnore: /mobile\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
     {
