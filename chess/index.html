@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>象棋學堂 — 棋譜、戰術與殘局破解</title>
+<meta name="description" content="從棋子走法、記譜法到殺法戰術與殘局挑戰，用會動的棋盤一步一步看懂中國象棋。可自行擺設局面讓別人破解。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='%23b3231f'/><text x='50' y='50' font-size='58' text-anchor='middle' dominant-baseline='central' fill='%23fff' font-family='serif'>帥</text></svg>">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-head">
+  <div class="wrap head-row">
+    <div class="brand"><span class="logo">帥</span><span>象棋學堂</span></div>
+    <nav class="tabs" role="tablist">
+      <button data-view="home" role="tab" aria-selected="true">首頁</button>
+      <button data-view="rules" role="tab" aria-selected="false">棋子走法</button>
+      <button data-view="notation" role="tab" aria-selected="false">看懂棋譜</button>
+      <button data-view="tactics" role="tab" aria-selected="false">殺法戰術</button>
+      <button data-view="puzzle" role="tab" aria-selected="false">殘局挑戰</button>
+      <button data-view="editor" role="tab" aria-selected="false">自己擺棋</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ── 首頁 ─────────────────────────────────────── -->
+  <section class="view active" id="view-home">
+    <h1>從第一步棋，到親手解開一盤殘局</h1>
+    <p class="lead">
+      這裡把中國象棋拆成四件事：棋子怎麼走、棋譜怎麼讀、殺法長什麼樣子、以及自己動手把對方將死。
+      每一個範例都是會動的棋盤——你可以一步一步走、也可以讓它自動演一遍，
+      看清楚每個子究竟移到了哪裡、為什麼那樣走。
+    </p>
+
+    <div class="grid-cards" style="margin:26px 0">
+      <button class="pick" data-goto="rules">
+        <div class="t"><span>① 棋子走法</span></div>
+        <div class="d">七種棋子的規則，加上蹩馬腿、塞象眼、砲架這些容易搞混的細節。棋盤會即時標出所有合法落點。</div>
+      </button>
+      <button class="pick" data-goto="notation">
+        <div class="t"><span>② 看懂棋譜</span></div>
+        <div class="d">「炮二平五」到底是什麼意思？跟著一盤當頭炮對屏風馬的開局，一步一步把記譜法學起來。</div>
+      </button>
+      <button class="pick" data-goto="tactics">
+        <div class="t"><span>③ 殺法戰術</span></div>
+        <div class="d">馬後炮、悶宮、鐵門栓、雙車錯⋯⋯八種經典殺型，每一種都有可以反覆播放的示範。</div>
+      </button>
+      <button class="pick" data-goto="puzzle">
+        <div class="t"><span>④ 殘局挑戰</span></div>
+        <div class="d">九道由淺入深的排局。你在棋盤上真的走子，電腦會判斷這一著能不能殺，並且替黑方應將。</div>
+      </button>
+      <button class="pick" data-goto="editor">
+        <div class="t"><span>⑤ 自己擺棋</span></div>
+        <div class="d">擺出你想考別人的局面，讓電腦驗算有沒有殺法，再把連結分享出去給朋友破解。</div>
+      </button>
+    </div>
+
+    <div class="card">
+      <h2>這個網站是怎麼運作的</h2>
+      <p>
+        網站內建一套完整的象棋規則引擎：走法產生、將軍判斷、記譜法轉換、以及連續將軍的殺法搜尋，全部在你的瀏覽器裡即時計算。
+        所以棋盤上標示的落點一定合法，你在殘局裡走的每一步也都會被真的驗算過——
+        走錯了它會告訴你為什麼接不下去，而不是只比對標準答案。
+      </p>
+      <p style="margin-bottom:0">
+        題庫裡的每一個局面都事先驗算過三件事：起始局面合法、標示的步數確實存在連將殺、
+        主變的最後一步對方確實一步棋也走不出來。
+      </p>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h2>名詞小辭典</h2>
+      <dl class="gloss" id="gloss"></dl>
+    </div>
+  </section>
+
+  <!-- ── 棋子走法 ─────────────────────────────────── -->
+  <section class="view" id="view-rules">
+    <h1>棋子走法</h1>
+    <p class="lead">點選右邊任何一個棋子，棋盤上就會用綠點標出它目前所有能走的位置。這些點是規則引擎當場算出來的，不是畫上去的。</p>
+    <div class="split">
+      <div>
+        <div id="rules-board"></div>
+        <div id="rules-info" style="margin-top:18px"></div>
+      </div>
+      <div class="grid-cards" id="rules-list"></div>
+    </div>
+  </section>
+
+  <!-- ── 記譜法 ───────────────────────────────────── -->
+  <section class="view" id="view-notation">
+    <h1>看懂棋譜</h1>
+    <p class="lead">棋譜是象棋的共同語言。一則著法固定由四個字組成，看懂了就能讀遍所有棋書與對局紀錄。</p>
+
+    <div class="card" style="margin-bottom:22px">
+      <h2>四個字的規則</h2>
+      <p><strong>第一個字：棋子名稱。</strong>例如「炮」「馬」「車」。若同一條直線上有兩個同名的棋子，就改用「前」「後」來區分，例如「前車進一」。</p>
+      <p><strong>第二個字：這個棋子現在在第幾路。</strong>紅方用中文數字 <b>一～九</b>，從紅方的<b>右邊</b>數過來；
+        黑方用阿拉伯數字 <b>1～9</b>，從黑方的<b>右邊</b>數過來。所以同一條直線，紅方叫「三路」時黑方叫「7 路」。
+        （棋盤上下方的座標列就是這兩套路數。）</p>
+      <p><strong>第三個字：往哪個方向。</strong>「進」是往對方走，「退」是往自己這邊走，「平」是橫著走。</p>
+      <p><strong>第四個字：走多少。</strong>車、炮、兵、將帥走直線，寫的是<b>走了幾格</b>；
+        馬、相、士走斜線，寫的是<b>目的地在第幾路</b>。若是「平」，一律寫目的地的路數。</p>
+      <p style="margin-bottom:0"><strong>例：</strong>「炮二平五」＝紅方二路的炮，橫著平移到五路（中路）。
+        「馬８進７」＝黑方 8 路的馬，往前跳到 7 路。</p>
+    </div>
+
+    <div class="split">
+      <div>
+        <div id="nota-board"></div>
+        <div id="nota-controls"></div>
+      </div>
+      <div>
+        <h3>當頭炮對屏風馬</h3>
+        <p class="lead" style="font-size:.93rem">
+          這是象棋最經典的開局之一。紅方一開始就把炮平到中路瞄準黑方中卒，黑方則用兩隻馬保護中卒，兩馬並列如同屏風。
+          按「下一步」，或直接讓它自動播放，一邊看棋子怎麼移動，一邊對照左邊的記譜寫法。
+        </p>
+        <div class="movelist" id="nota-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 戰術 ─────────────────────────────────────── -->
+  <section class="view" id="view-tactics">
+    <h1>殺法戰術</h1>
+    <p class="lead">
+      殘局的殺法其實就那幾種「形狀」。認得出形狀，算殺就快得多。
+      下面八種是最常見的經典殺型，每一種都可以反覆播放，看清楚棋子是怎麼走到殺位的。
+    </p>
+    <div class="split">
+      <div>
+        <div id="tac-board"></div>
+        <div id="tac-controls"></div>
+        <div id="tac-info"></div>
+        <div class="movelist" id="tac-list" style="margin-top:14px"></div>
+      </div>
+      <div class="grid-cards" id="tac-list-pick"></div>
+    </div>
+  </section>
+
+  <!-- ── 殘局挑戰 ─────────────────────────────────── -->
+  <section class="view" id="view-puzzle">
+    <h1>殘局挑戰</h1>
+    <p class="lead">
+      每一題都輪紅方走棋，目標是在規定步數之內連續將軍把黑方將死。
+      直接在棋盤上點子、點目標格走棋；電腦會即時驗算你這一著能不能殺，並且用最頑強的方式替黑方應將。
+      走不出來也沒關係，可以看提示或直接看解答。
+    </p>
+    <div class="split">
+      <div>
+        <div id="puz-board"></div>
+        <div id="puz-controls"></div>
+        <div class="status" id="puz-status"></div>
+        <div class="movelist" id="puz-moves" style="margin-top:14px"></div>
+      </div>
+      <div>
+        <div id="puz-info" style="margin-bottom:18px"></div>
+        <h3>題目</h3>
+        <div class="grid-cards" id="puz-pick"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 擺棋 ─────────────────────────────────────── -->
+  <section class="view" id="view-editor">
+    <h1>自己擺棋</h1>
+    <p class="lead">
+      選一個棋子，再點棋盤就能把它放上去；選「清除」則可以拿掉棋子。
+      擺好之後可以讓電腦驗算有沒有連將殺，或是把連結複製給朋友，讓他們來破解你出的題目。
+    </p>
+    <div class="split">
+      <div>
+        <div id="ed-board"></div>
+      </div>
+      <div>
+        <h3>棋子</h3>
+        <div class="palette" id="ed-palette"></div>
+
+        <div class="controls">
+          <label style="display:flex;align-items:center;gap:8px">
+            輪誰走：
+            <select id="ed-side" class="btn">
+              <option value="r">紅方</option>
+              <option value="b">黑方</option>
+            </select>
+          </label>
+          <button class="btn" id="ed-clear">清空棋盤</button>
+          <button class="btn" id="ed-start">擺回開局</button>
+        </div>
+
+        <div class="status" id="ed-msg"></div>
+
+        <div class="controls">
+          <button class="btn primary" id="ed-solve">🔍 找出殺法</button>
+          <button class="btn" id="ed-share">🔗 複製分享連結</button>
+          <button class="btn" id="ed-load">載入下方 FEN</button>
+        </div>
+
+        <label class="sr" for="ed-fen">局面 FEN</label>
+        <input class="fen" id="ed-fen" spellcheck="false">
+        <p class="lead" style="font-size:.86rem;margin-top:8px">
+          上面這串是這個局面的 FEN 代碼，象棋軟體之間常用它來交換局面。
+          貼一串進去再按「載入下方 FEN」就能還原局面。
+        </p>
+      </div>
+    </div>
+    <div id="ed-solution"></div>
+  </section>
+
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    象棋學堂 — 所有規則判斷、記譜轉換與殺法搜尋皆在瀏覽器本機執行，不需要連線。
+  </div>
+</footer>
+
+<script src="js/rules.js"></script>
+<script src="js/board.js"></script>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
