@@ -1,0 +1,2125 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>象棋學堂 — 棋譜、戰術與殘局破解</title>
+<meta name="description" content="從棋子走法、記譜法到殺法戰術與殘局挑戰，用會動的棋盤一步一步看懂中國象棋。可自行擺設局面讓別人破解。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='%23b3231f'/><text x='50' y='50' font-size='58' text-anchor='middle' dominant-baseline='central' fill='%23fff' font-family='serif'>帥</text></svg>">
+<style>
+/* ── 基礎 ─────────────────────────────────────────────── */
+:root {
+  --bg: #f5f1e8;
+  --bg-alt: #fffdf8;
+  --panel: #ffffff;
+  --ink: #24201a;
+  --ink-soft: #6a6355;
+  --line: #e0d8c8;
+  --red: #b3231f;
+  --red-soft: #d9534f;
+  --black-piece: #1d2733;
+  --accent: #1f6f5c;
+  --accent-soft: #e3f0ea;
+  --board: #eccd93;
+  --board-edge: #b8873f;
+  --grid: #6a4a1e;
+  --danger-bg: #fdeceb;
+  --shadow: 0 1px 2px rgba(60, 45, 20, .12), 0 6px 20px rgba(60, 45, 20, .10);
+  --radius: 14px;
+}
+
+/* 深色配色有兩個入口：系統偏好，以及檢視器手動切換時加在 :root 的 data-theme。
+   手動選擇必須勝過系統偏好，所以系統偏好那一條排除了 data-theme="light"。 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16181c;
+    --bg-alt: #1d2026;
+    --panel: #22262d;
+    --ink: #e9e6df;
+    --ink-soft: #a09a90;
+    --line: #343943;
+    --red: #ef6a5c;
+    --red-soft: #ef6a5c;
+    --black-piece: #cdd6e3;
+    --accent: #4dbb9a;
+    --accent-soft: #1e332e;
+    --board: #d9b87c;
+    --board-edge: #7a5722;
+    --danger-bg: #3a2020;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .35);
+  }
+}
+:root[data-theme="dark"] {
+    --bg: #16181c;
+    --bg-alt: #1d2026;
+    --panel: #22262d;
+    --ink: #e9e6df;
+    --ink-soft: #a09a90;
+    --line: #343943;
+    --red: #ef6a5c;
+    --red-soft: #ef6a5c;
+    --black-piece: #cdd6e3;
+    --accent: #4dbb9a;
+    --accent-soft: #1e332e;
+    --board: #d9b87c;
+    --board-edge: #7a5722;
+    --danger-bg: #3a2020;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .35);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei",
+    -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 { line-height: 1.35; margin: 0 0 .5em; font-weight: 700; letter-spacing: .01em; }
+h1 { font-size: clamp(1.5rem, 1.1rem + 1.7vw, 2.1rem); }
+h2 { font-size: clamp(1.2rem, 1rem + .9vw, 1.55rem); }
+h3 { font-size: 1.05rem; }
+p { margin: 0 0 1em; }
+a { color: var(--accent); }
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+/* ── 頁首與導覽 ───────────────────────────────────────── */
+.site-head {
+  background: var(--bg-alt);
+  border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 30;
+  backdrop-filter: blur(8px);
+}
+.head-row { display: flex; align-items: center; gap: 16px; padding: 12px 0; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.05rem; }
+.brand .logo {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--red); color: #fff;
+  display: grid; place-items: center; font-size: 1.15rem;
+  border: 2px solid #fff3; box-shadow: var(--shadow);
+}
+nav.tabs { display: flex; gap: 4px; margin-left: auto; flex-wrap: wrap; }
+nav.tabs button {
+  border: 0; background: none; color: var(--ink-soft);
+  font: inherit; font-size: .95rem; padding: 7px 14px;
+  border-radius: 999px; cursor: pointer; white-space: nowrap;
+}
+nav.tabs button:hover { background: var(--bg); color: var(--ink); }
+nav.tabs button[aria-selected="true"] { background: var(--accent); color: #fff; font-weight: 600; }
+
+/* ── 版面 ─────────────────────────────────────────────── */
+main { padding: 28px 0 72px; }
+section.view { display: none; }
+section.view.active { display: block; animation: fade .28s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.lead { color: var(--ink-soft); max-width: 62ch; }
+
+.card {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow);
+}
+.split { display: grid; grid-template-columns: minmax(280px, 420px) 1fr; gap: 26px; align-items: start; }
+@media (max-width: 780px) { .split { grid-template-columns: 1fr; } }
+
+/* ── 棋盤 ─────────────────────────────────────────────── */
+.xq-host { width: 100%; max-width: 440px; margin: 0 auto; user-select: none; }
+.xq-frame {
+  background: var(--board);
+  border: 3px solid var(--board-edge);
+  border-radius: 8px;
+  padding: 4.4%;
+  box-shadow: var(--shadow);
+}
+.xq-inner { position: relative; width: 100%; aspect-ratio: 8 / 9; container-type: inline-size; }
+.xq-grid { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.xq-line { stroke: var(--grid); stroke-width: 2.4; opacity: .75; }
+.xq-border { stroke: var(--grid); stroke-width: 4; opacity: .9; }
+.xq-star { stroke: var(--grid); stroke-width: 2.4; opacity: .55; }
+.xq-river-text {
+  fill: var(--grid); opacity: .6; font-size: 46px; letter-spacing: 10px;
+  text-anchor: middle; dominant-baseline: middle;
+  font-family: "Noto Serif TC", "PingFang TC", serif;
+}
+
+.xq-layer { position: absolute; inset: 0; }
+.xq-marks { pointer-events: none; }
+
+.xq-piece {
+  position: absolute;
+  width: 11.6%; aspect-ratio: 1;
+  margin: 0; transform: translate(-50%, -50%);
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: radial-gradient(circle at 34% 28%, #fffdf6, #f0e2c4 62%, #d9c191);
+  box-shadow: 0 2px 4px rgba(60, 40, 10, .35), inset 0 0 0 1.5px #fff8;
+  transition: left .38s cubic-bezier(.34, .8, .3, 1), top .38s cubic-bezier(.34, .8, .3, 1),
+              opacity .3s ease, transform .3s ease;
+  cursor: pointer; z-index: 2;
+}
+.xq-face {
+  /* 字級跟著棋盤寬度縮放，而不是跟著視窗寬度 */
+  font-size: 1.25rem; font-size: 7.2cqw;
+  font-weight: 700; line-height: 1;
+  font-family: "Noto Serif TC", "PingFang TC", "Microsoft JhengHei", serif;
+  border-radius: 50%; width: 82%; aspect-ratio: 1;
+  display: grid; place-items: center;
+  border: 1.5px solid currentColor;
+}
+.xq-piece.red .xq-face { color: #a51f1a; }
+.xq-piece.black .xq-face { color: #1f2833; }
+.xq-piece.moving { z-index: 5; }
+.xq-piece.sel { transform: translate(-50%, -50%) scale(1.09); box-shadow: 0 0 0 3px var(--accent), 0 3px 8px rgba(0,0,0,.3); }
+.xq-piece.in-check { animation: pulse 1s ease infinite; }
+.xq-piece.captured { opacity: 0; transform: translate(-50%, -50%) scale(.4); z-index: 1; }
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 50, 40, .75), 0 2px 4px rgba(60,40,10,.35); }
+  50% { box-shadow: 0 0 0 7px rgba(220, 50, 40, 0), 0 2px 4px rgba(60,40,10,.35); }
+}
+
+.xq-mark { position: absolute; transform: translate(-50%, -50%); border-radius: 50%; }
+.xq-dot { width: 4.4%; aspect-ratio: 1; background: var(--accent); opacity: .75; }
+.xq-cap { width: 12.4%; aspect-ratio: 1; border: 3px solid var(--accent); opacity: .8; }
+.xq-last { width: 12.6%; aspect-ratio: 1; border: 2.5px dashed var(--red-soft); opacity: .85; }
+.xq-last.from { opacity: .5; }
+
+/* 座標列的左右邊界必須剛好等於棋盤內框（外框 padding + border），
+   標籤再用與棋子相同的百分比定位，才會對準每一條直線。 */
+.xq-coords {
+  position: relative; height: 1.5em;
+  margin: 2px calc(4.4% + 3px);
+  font-size: .78rem; color: var(--ink-soft);
+}
+.xq-coords span { position: absolute; transform: translateX(-50%); }
+
+/* ── 控制列 ───────────────────────────────────────────── */
+.controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+button.btn {
+  font: inherit; font-size: .92rem;
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+  padding: 7px 15px; border-radius: 9px; cursor: pointer;
+  transition: background .15s, border-color .15s, transform .08s;
+}
+button.btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+button.btn:active:not(:disabled) { transform: translateY(1px); }
+button.btn:disabled { opacity: .42; cursor: default; }
+button.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.btn.primary:hover:not(:disabled) { filter: brightness(1.08); color: #fff; }
+
+/* ── 著法清單 ─────────────────────────────────────────── */
+.movelist { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.movelist ol { list-style: none; margin: 0; padding: 0; max-height: 340px; overflow-y: auto; }
+.movelist li {
+  display: grid; grid-template-columns: 2.4rem 5.5rem 1fr; gap: 10px;
+  padding: 9px 13px; border-top: 1px solid var(--line); font-size: .93rem;
+  cursor: pointer; align-items: baseline;
+}
+.movelist li:first-child { border-top: 0; }
+.movelist li:hover { background: var(--bg); }
+.movelist li.on { background: var(--accent-soft); }
+.movelist li .n { color: var(--ink-soft); font-size: .82rem; }
+.movelist li .mv { font-weight: 700; font-family: "Noto Serif TC", serif; }
+.movelist li.red .mv { color: var(--red); }
+.movelist li.black .mv { color: var(--ink); }
+.movelist li .note { color: var(--ink-soft); font-size: .87rem; line-height: 1.6; }
+.movelist li.hidden-note .note { filter: blur(4px); }
+@media (max-width: 520px) {
+  .movelist li { grid-template-columns: 2rem 1fr; }
+  .movelist li .note { grid-column: 1 / -1; }
+}
+
+.status {
+  padding: 10px 14px; border-radius: 10px; font-size: .93rem;
+  background: var(--bg); border: 1px solid var(--line); min-height: 2.6em;
+}
+.status.good { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.status.bad { background: var(--danger-bg); border-color: var(--red-soft); color: var(--red); }
+
+/* ── 清單／卡片 ───────────────────────────────────────── */
+.grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 14px; }
+.pick {
+  text-align: left; font: inherit; cursor: pointer;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+  padding: 14px 16px; color: var(--ink); transition: border-color .15s, transform .1s, box-shadow .15s;
+}
+.pick:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow); }
+.pick[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.pick .t { font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.pick .d { color: var(--ink-soft); font-size: .86rem; margin-top: 4px; }
+.tag {
+  font-size: .74rem; padding: 2px 8px; border-radius: 999px;
+  background: var(--bg); border: 1px solid var(--line); color: var(--ink-soft);
+  font-weight: 500;
+}
+.tag.solved { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+dl.gloss { display: grid; grid-template-columns: max-content 1fr; gap: 8px 20px; margin: 0; }
+dl.gloss dt { font-weight: 700; color: var(--accent); }
+dl.gloss dd { margin: 0; color: var(--ink-soft); }
+@media (max-width: 560px) {
+  dl.gloss { grid-template-columns: 1fr; gap: 2px; }
+  dl.gloss dd { margin-bottom: 10px; }
+}
+
+.rule-box {
+  border-left: 3px solid var(--accent); background: var(--accent-soft);
+  padding: 10px 16px; border-radius: 0 8px 8px 0; margin: 0 0 14px;
+}
+.hint-box { border-left-color: var(--red-soft); background: var(--danger-bg); }
+
+/* ── 擺棋編輯器 ───────────────────────────────────────── */
+.palette { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.palette button {
+  width: 42px; height: 42px; border-radius: 50%; cursor: pointer;
+  font-family: "Noto Serif TC", serif; font-weight: 700; font-size: 1.05rem;
+  background: radial-gradient(circle at 34% 28%, #fffdf6, #f0e2c4 62%, #d9c191);
+  border: 2px solid transparent;
+}
+.palette button.red { color: #a51f1a; }
+.palette button.black { color: #1f2833; }
+.palette button[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.palette button.erase { background: var(--panel); color: var(--ink-soft); font-size: .8rem; }
+
+input.fen, textarea.fen {
+  width: 100%; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: .84rem; padding: 9px 11px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+}
+
+footer.site-foot {
+  border-top: 1px solid var(--line); padding: 22px 0 34px;
+  color: var(--ink-soft); font-size: .87rem;
+}
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+</head>
+<body>
+
+<header class="site-head">
+  <div class="wrap head-row">
+    <div class="brand"><span class="logo">帥</span><span>象棋學堂</span></div>
+    <nav class="tabs" role="tablist">
+      <button data-view="home" role="tab" aria-selected="true">首頁</button>
+      <button data-view="rules" role="tab" aria-selected="false">棋子走法</button>
+      <button data-view="notation" role="tab" aria-selected="false">看懂棋譜</button>
+      <button data-view="tactics" role="tab" aria-selected="false">殺法戰術</button>
+      <button data-view="puzzle" role="tab" aria-selected="false">殘局挑戰</button>
+      <button data-view="editor" role="tab" aria-selected="false">自己擺棋</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ── 首頁 ─────────────────────────────────────── -->
+  <section class="view active" id="view-home">
+    <h1>從第一步棋，到親手解開一盤殘局</h1>
+    <p class="lead">
+      這裡把中國象棋拆成四件事：棋子怎麼走、棋譜怎麼讀、殺法長什麼樣子、以及自己動手把對方將死。
+      每一個範例都是會動的棋盤——你可以一步一步走、也可以讓它自動演一遍，
+      看清楚每個子究竟移到了哪裡、為什麼那樣走。
+    </p>
+
+    <div class="grid-cards" style="margin:26px 0">
+      <button class="pick" data-goto="rules">
+        <div class="t"><span>① 棋子走法</span></div>
+        <div class="d">七種棋子的規則，加上蹩馬腿、塞象眼、砲架這些容易搞混的細節。棋盤會即時標出所有合法落點。</div>
+      </button>
+      <button class="pick" data-goto="notation">
+        <div class="t"><span>② 看懂棋譜</span></div>
+        <div class="d">「炮二平五」到底是什麼意思？跟著一盤當頭炮對屏風馬的開局，一步一步把記譜法學起來。</div>
+      </button>
+      <button class="pick" data-goto="tactics">
+        <div class="t"><span>③ 殺法戰術</span></div>
+        <div class="d">馬後炮、悶宮、鐵門栓、雙車錯⋯⋯八種經典殺型，每一種都有可以反覆播放的示範。</div>
+      </button>
+      <button class="pick" data-goto="puzzle">
+        <div class="t"><span>④ 殘局挑戰</span></div>
+        <div class="d">九道由淺入深的排局。你在棋盤上真的走子，電腦會判斷這一著能不能殺，並且替黑方應將。</div>
+      </button>
+      <button class="pick" data-goto="editor">
+        <div class="t"><span>⑤ 自己擺棋</span></div>
+        <div class="d">擺出你想考別人的局面，讓電腦驗算有沒有殺法，再把連結分享出去給朋友破解。</div>
+      </button>
+    </div>
+
+    <div class="card">
+      <h2>這個網站是怎麼運作的</h2>
+      <p>
+        網站內建一套完整的象棋規則引擎：走法產生、將軍判斷、記譜法轉換、以及連續將軍的殺法搜尋，全部在你的瀏覽器裡即時計算。
+        所以棋盤上標示的落點一定合法，你在殘局裡走的每一步也都會被真的驗算過——
+        走錯了它會告訴你為什麼接不下去，而不是只比對標準答案。
+      </p>
+      <p style="margin-bottom:0">
+        題庫裡的每一個局面都事先驗算過三件事：起始局面合法、標示的步數確實存在連將殺、
+        主變的最後一步對方確實一步棋也走不出來。
+      </p>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h2>名詞小辭典</h2>
+      <dl class="gloss" id="gloss"></dl>
+    </div>
+  </section>
+
+  <!-- ── 棋子走法 ─────────────────────────────────── -->
+  <section class="view" id="view-rules">
+    <h1>棋子走法</h1>
+    <p class="lead">點選右邊任何一個棋子，棋盤上就會用綠點標出它目前所有能走的位置。這些點是規則引擎當場算出來的，不是畫上去的。</p>
+    <div class="split">
+      <div>
+        <div id="rules-board"></div>
+        <div id="rules-info" style="margin-top:18px"></div>
+      </div>
+      <div class="grid-cards" id="rules-list"></div>
+    </div>
+  </section>
+
+  <!-- ── 記譜法 ───────────────────────────────────── -->
+  <section class="view" id="view-notation">
+    <h1>看懂棋譜</h1>
+    <p class="lead">棋譜是象棋的共同語言。一則著法固定由四個字組成，看懂了就能讀遍所有棋書與對局紀錄。</p>
+
+    <div class="card" style="margin-bottom:22px">
+      <h2>四個字的規則</h2>
+      <p><strong>第一個字：棋子名稱。</strong>例如「炮」「馬」「車」。若同一條直線上有兩個同名的棋子，就改用「前」「後」來區分，例如「前車進一」。</p>
+      <p><strong>第二個字：這個棋子現在在第幾路。</strong>紅方用中文數字 <b>一～九</b>，從紅方的<b>右邊</b>數過來；
+        黑方用阿拉伯數字 <b>1～9</b>，從黑方的<b>右邊</b>數過來。所以同一條直線，紅方叫「三路」時黑方叫「7 路」。
+        （棋盤上下方的座標列就是這兩套路數。）</p>
+      <p><strong>第三個字：往哪個方向。</strong>「進」是往對方走，「退」是往自己這邊走，「平」是橫著走。</p>
+      <p><strong>第四個字：走多少。</strong>車、炮、兵、將帥走直線，寫的是<b>走了幾格</b>；
+        馬、相、士走斜線，寫的是<b>目的地在第幾路</b>。若是「平」，一律寫目的地的路數。</p>
+      <p style="margin-bottom:0"><strong>例：</strong>「炮二平五」＝紅方二路的炮，橫著平移到五路（中路）。
+        「馬８進７」＝黑方 8 路的馬，往前跳到 7 路。</p>
+    </div>
+
+    <div class="split">
+      <div>
+        <div id="nota-board"></div>
+        <div id="nota-controls"></div>
+      </div>
+      <div>
+        <h3>當頭炮對屏風馬</h3>
+        <p class="lead" style="font-size:.93rem">
+          這是象棋最經典的開局之一。紅方一開始就把炮平到中路瞄準黑方中卒，黑方則用兩隻馬保護中卒，兩馬並列如同屏風。
+          按「下一步」，或直接讓它自動播放，一邊看棋子怎麼移動，一邊對照左邊的記譜寫法。
+        </p>
+        <div class="movelist" id="nota-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 戰術 ─────────────────────────────────────── -->
+  <section class="view" id="view-tactics">
+    <h1>殺法戰術</h1>
+    <p class="lead">
+      殘局的殺法其實就那幾種「形狀」。認得出形狀，算殺就快得多。
+      下面八種是最常見的經典殺型，每一種都可以反覆播放，看清楚棋子是怎麼走到殺位的。
+    </p>
+    <div class="split">
+      <div>
+        <div id="tac-board"></div>
+        <div id="tac-controls"></div>
+        <div id="tac-info"></div>
+        <div class="movelist" id="tac-list" style="margin-top:14px"></div>
+      </div>
+      <div class="grid-cards" id="tac-list-pick"></div>
+    </div>
+  </section>
+
+  <!-- ── 殘局挑戰 ─────────────────────────────────── -->
+  <section class="view" id="view-puzzle">
+    <h1>殘局挑戰</h1>
+    <p class="lead">
+      每一題都輪紅方走棋，目標是在規定步數之內連續將軍把黑方將死。
+      直接在棋盤上點子、點目標格走棋；電腦會即時驗算你這一著能不能殺，並且用最頑強的方式替黑方應將。
+      走不出來也沒關係，可以看提示或直接看解答。
+    </p>
+    <div class="split">
+      <div>
+        <div id="puz-board"></div>
+        <div id="puz-controls"></div>
+        <div class="status" id="puz-status"></div>
+        <div class="movelist" id="puz-moves" style="margin-top:14px"></div>
+      </div>
+      <div>
+        <div id="puz-info" style="margin-bottom:18px"></div>
+        <h3>題目</h3>
+        <div class="grid-cards" id="puz-pick"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 擺棋 ─────────────────────────────────────── -->
+  <section class="view" id="view-editor">
+    <h1>自己擺棋</h1>
+    <p class="lead">
+      選一個棋子，再點棋盤就能把它放上去；選「清除」則可以拿掉棋子。
+      擺好之後可以讓電腦驗算有沒有連將殺，或是把連結複製給朋友，讓他們來破解你出的題目。
+    </p>
+    <div class="split">
+      <div>
+        <div id="ed-board"></div>
+      </div>
+      <div>
+        <h3>棋子</h3>
+        <div class="palette" id="ed-palette"></div>
+
+        <div class="controls">
+          <label style="display:flex;align-items:center;gap:8px">
+            輪誰走：
+            <select id="ed-side" class="btn">
+              <option value="r">紅方</option>
+              <option value="b">黑方</option>
+            </select>
+          </label>
+          <button class="btn" id="ed-clear">清空棋盤</button>
+          <button class="btn" id="ed-start">擺回開局</button>
+        </div>
+
+        <div class="status" id="ed-msg"></div>
+
+        <div class="controls">
+          <button class="btn primary" id="ed-solve">🔍 找出殺法</button>
+          <button class="btn" id="ed-share">🔗 複製分享連結</button>
+          <button class="btn" id="ed-load">載入下方 FEN</button>
+        </div>
+
+        <label class="sr" for="ed-fen">局面 FEN</label>
+        <input class="fen" id="ed-fen" spellcheck="false">
+        <p class="lead" style="font-size:.86rem;margin-top:8px">
+          上面這串是這個局面的 FEN 代碼，象棋軟體之間常用它來交換局面。
+          貼一串進去再按「載入下方 FEN」就能還原局面。
+        </p>
+      </div>
+    </div>
+    <div id="ed-solution"></div>
+  </section>
+
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    象棋學堂 — 所有規則判斷、記譜轉換與殺法搜尋皆在瀏覽器本機執行，不需要連線。
+  </div>
+</footer>
+
+<script>
+/*
+ * rules.js — 中國象棋規則引擎
+ *
+ * 棋盤座標：row 0 = 黑方底線（上方），row 9 = 紅方底線（下方）
+ *           col 0 = 畫面最左，col 8 = 畫面最右
+ *           index = row * 9 + col
+ *
+ * 棋子代號（沿用國際通用的象棋 FEN）：
+ *   大寫 = 紅方，小寫 = 黑方
+ *   K 將帥  A 士仕  B 象相  N 馬傌  R 車俥  C 炮砲  P 兵卒
+ */
+(function (root, factory) {
+  const api = factory();
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  root.XQ = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  'use strict';
+
+  const W = 9, H = 10, SIZE = 90;
+  const RED = 'r', BLACK = 'b';
+
+  const rowOf = (i) => (i / W) | 0;
+  const colOf = (i) => i % W;
+  const at = (r, c) => r * W + c;
+  const onBoard = (r, c) => r >= 0 && r < H && c >= 0 && c < W;
+
+  function colorOf(p) {
+    if (!p) return null;
+    return p === p.toUpperCase() ? RED : BLACK;
+  }
+  const typeOf = (p) => (p ? p.toUpperCase() : null);
+  const opposite = (s) => (s === RED ? BLACK : RED);
+
+  /* ── 陣營相關的基本判斷 ───────────────────────────────── */
+
+  // 己方半場（紅方 row 5-9，黑方 row 0-4）
+  const ownHalf = (side, r) => (side === RED ? r >= 5 : r <= 4);
+  // 九宮
+  const inPalace = (side, r, c) =>
+    c >= 3 && c <= 5 && (side === RED ? r >= 7 : r <= 2);
+
+  /* ── FEN ─────────────────────────────────────────────── */
+
+  function parseFen(fen) {
+    const parts = String(fen).trim().split(/\s+/);
+    const board = new Array(SIZE).fill('');
+    const rows = parts[0].split('/');
+    for (let r = 0; r < H && r < rows.length; r++) {
+      let c = 0;
+      for (const ch of rows[r]) {
+        if (ch >= '0' && ch <= '9') c += Number(ch);
+        else if (c < W) board[at(r, c++)] = ch;
+      }
+    }
+    return { board, side: parts[1] === 'b' ? BLACK : RED };
+  }
+
+  function toFen(board, side) {
+    const rows = [];
+    for (let r = 0; r < H; r++) {
+      let line = '', empty = 0;
+      for (let c = 0; c < W; c++) {
+        const p = board[at(r, c)];
+        if (p) {
+          if (empty) { line += empty; empty = 0; }
+          line += p;
+        } else empty++;
+      }
+      if (empty) line += empty;
+      rows.push(line);
+    }
+    return rows.join('/') + ' ' + (side || RED);
+  }
+
+  const cloneBoard = (board) => board.slice();
+
+  /* ── 走法產生（偽合法，尚未過濾送將） ─────────────────── */
+
+  const ROOK_DIRS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+  const KNIGHT_STEPS = [
+    // [dr, dc, 馬腿 dr, 馬腿 dc]
+    [-2, -1, -1, 0], [-2, 1, -1, 0],
+    [2, -1, 1, 0], [2, 1, 1, 0],
+    [-1, -2, 0, -1], [1, -2, 0, -1],
+    [-1, 2, 0, 1], [1, 2, 0, 1],
+  ];
+  const BISHOP_STEPS = [[-2, -2], [-2, 2], [2, -2], [2, 2]];
+  const ADVISOR_STEPS = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+
+  function genPieceMoves(board, from, out) {
+    const p = board[from];
+    if (!p) return out;
+    const side = colorOf(p);
+    const r = rowOf(from), c = colOf(from);
+    const push = (tr, tc) => {
+      if (!onBoard(tr, tc)) return;
+      const t = board[at(tr, tc)];
+      if (t && colorOf(t) === side) return;
+      out.push({ from, to: at(tr, tc) });
+    };
+
+    switch (typeOf(p)) {
+      case 'R':
+        for (const [dr, dc] of ROOK_DIRS) {
+          let tr = r + dr, tc = c + dc;
+          while (onBoard(tr, tc)) {
+            const t = board[at(tr, tc)];
+            if (!t) out.push({ from, to: at(tr, tc) });
+            else {
+              if (colorOf(t) !== side) out.push({ from, to: at(tr, tc) });
+              break;
+            }
+            tr += dr; tc += dc;
+          }
+        }
+        break;
+
+      case 'C':
+        for (const [dr, dc] of ROOK_DIRS) {
+          let tr = r + dr, tc = c + dc, screen = false;
+          while (onBoard(tr, tc)) {
+            const t = board[at(tr, tc)];
+            if (!screen) {
+              if (!t) out.push({ from, to: at(tr, tc) });
+              else screen = true;               // 找到砲架
+            } else if (t) {
+              if (colorOf(t) !== side) out.push({ from, to: at(tr, tc) });
+              break;                            // 砲架之後只能吃第一個子
+            }
+            tr += dr; tc += dc;
+          }
+        }
+        break;
+
+      case 'N':
+        for (const [dr, dc, lr, lc] of KNIGHT_STEPS) {
+          if (board[at(r + lr, c + lc)]) continue; // 蹩馬腿
+          push(r + dr, c + dc);
+        }
+        break;
+
+      case 'B':
+        for (const [dr, dc] of BISHOP_STEPS) {
+          const tr = r + dr, tc = c + dc;
+          if (!onBoard(tr, tc)) continue;
+          if (!ownHalf(side, tr)) continue;               // 象不過河
+          if (board[at(r + dr / 2, c + dc / 2)]) continue; // 塞象眼
+          push(tr, tc);
+        }
+        break;
+
+      case 'A':
+        for (const [dr, dc] of ADVISOR_STEPS) {
+          const tr = r + dr, tc = c + dc;
+          if (!onBoard(tr, tc) || !inPalace(side, tr, tc)) continue;
+          push(tr, tc);
+        }
+        break;
+
+      case 'K':
+        for (const [dr, dc] of ROOK_DIRS) {
+          const tr = r + dr, tc = c + dc;
+          if (!onBoard(tr, tc) || !inPalace(side, tr, tc)) continue;
+          push(tr, tc);
+        }
+        break;
+
+      case 'P': {
+        const fwd = side === RED ? -1 : 1;
+        push(r + fwd, c);
+        if (!ownHalf(side, r)) {   // 過河後可橫走
+          push(r, c - 1);
+          push(r, c + 1);
+        }
+        break;
+      }
+    }
+    return out;
+  }
+
+  function genMoves(board, side) {
+    const out = [];
+    for (let i = 0; i < SIZE; i++) {
+      if (board[i] && colorOf(board[i]) === side) genPieceMoves(board, i, out);
+    }
+    return out;
+  }
+
+  /* ── 將軍與合法性 ────────────────────────────────────── */
+
+  function findKing(board, side) {
+    const k = side === RED ? 'K' : 'k';
+    for (let i = 0; i < SIZE; i++) if (board[i] === k) return i;
+    return -1;
+  }
+
+  // 白臉將（雙方將帥在同一直線且中間無子）
+  function kingsFacing(board) {
+    const a = findKing(board, RED), b = findKing(board, BLACK);
+    if (a < 0 || b < 0) return false;
+    if (colOf(a) !== colOf(b)) return false;
+    const c = colOf(a);
+    for (let r = rowOf(b) + 1; r < rowOf(a); r++) if (board[at(r, c)]) return false;
+    return true;
+  }
+
+  function inCheck(board, side) {
+    const king = findKing(board, side);
+    if (king < 0) return true;                 // 將帥被吃視為已負
+    if (kingsFacing(board)) return true;
+    const foes = genMoves(board, opposite(side));
+    for (const m of foes) if (m.to === king) return true;
+    return false;
+  }
+
+  function applyMove(board, move) {
+    const nb = board.slice();
+    nb[move.to] = nb[move.from];
+    nb[move.from] = '';
+    return nb;
+  }
+
+  function legalMoves(board, side) {
+    const out = [];
+    for (const m of genMoves(board, side)) {
+      if (!inCheck(applyMove(board, m), side)) out.push(m);
+    }
+    return out;
+  }
+
+  function movesFrom(board, from) {
+    const side = colorOf(board[from]);
+    if (!side) return [];
+    const out = [];
+    for (const m of genPieceMoves(board, from, [])) {
+      if (!inCheck(applyMove(board, m), side)) out.push(m);
+    }
+    return out;
+  }
+
+  const isLegalMove = (board, from, to) =>
+    movesFrom(board, from).some((m) => m.to === to);
+
+  // 對 side 而言：被將死或困斃（象棋中困斃同樣判負）
+  function isMated(board, side) {
+    return legalMoves(board, side).length === 0;
+  }
+
+  function gameOver(board, side) {
+    if (findKing(board, side) < 0) return true;
+    return isMated(board, side);
+  }
+
+  /* ── 中文記譜 ────────────────────────────────────────── */
+
+  const NAMES = {
+    r: { K: '帥', A: '仕', B: '相', N: '馬', R: '車', C: '炮', P: '兵' },
+    b: { K: '將', A: '士', B: '象', N: '馬', R: '車', C: '砲', P: '卒' },
+  };
+  const CN_DIGITS = ['一', '二', '三', '四', '五', '六', '七', '八', '九'];
+
+  // 紅方由右至左為一~九；黑方由己方右邊（畫面左邊）起算 1~9
+  const fileNum = (side, c) => (side === RED ? W - c : c + 1);
+  const num = (side, n) => (side === RED ? CN_DIGITS[n - 1] : String(n));
+
+  function moveToChinese(board, from, to) {
+    const p = board[from];
+    if (!p) return '';
+    const side = colorOf(p);
+    const type = typeOf(p);
+    const name = NAMES[side][type];
+    const fr = rowOf(from), fc = colOf(from);
+    const tr = rowOf(to), tc = colOf(to);
+
+    // 同一直線上是否有同名棋子 → 需用「前/後」等前綴
+    const sameFile = [];
+    for (let r = 0; r < H; r++) {
+      const i = at(r, fc);
+      if (board[i] === p) sameFile.push(r);
+    }
+    // 由「前」到「後」排序：紅方 row 小者在前，黑方 row 大者在前
+    sameFile.sort((a, b) => (side === RED ? a - b : b - a));
+
+    let subject;
+    if (sameFile.length >= 2) {
+      const pos = sameFile.indexOf(fr);
+      let prefix;
+      if (sameFile.length === 2) prefix = pos === 0 ? '前' : '後';
+      else if (pos === 0) prefix = '前';
+      else if (pos === sameFile.length - 1) prefix = '後';
+      else prefix = num(side, pos + 1);
+      subject = prefix + name;
+    } else {
+      subject = name + num(side, fileNum(side, fc));
+    }
+
+    if (fr === tr) return subject + '平' + num(side, fileNum(side, tc));
+
+    const forward = side === RED ? tr < fr : tr > fr;
+    const verb = forward ? '進' : '退';
+    // 車炮兵將帥走直線 → 記步數；馬相象士仕走斜線 → 記目標路數
+    const straight = type === 'R' || type === 'C' || type === 'P' || type === 'K';
+    const amount = straight
+      ? num(side, Math.abs(tr - fr))
+      : num(side, fileNum(side, tc));
+    return subject + verb + amount;
+  }
+
+  /* ── 殺法搜尋（連續將軍的 N 步殺） ────────────────────── */
+
+  function checkingMoves(board, side) {
+    const out = [];
+    for (const m of legalMoves(board, side)) {
+      const nb = applyMove(board, m);
+      if (inCheck(nb, opposite(side))) out.push(m);
+    }
+    return out;
+  }
+
+  /**
+   * 搜尋 side 是否能在 n 個回合內以「連續將軍」把對手將死。
+   * 回傳主變著法陣列（長度 = 2n-1 的一半…），找不到回傳 null。
+   * 由於教學用的排局殺法皆為連將殺，攻方僅搜尋將軍著法，速度足夠。
+   */
+  function findMate(board, side, n) {
+    if (n <= 0) return null;
+    const foe = opposite(side);
+    let fallback = null;
+    for (const m of checkingMoves(board, side)) {
+      const nb = applyMove(board, m);
+      const defenses = legalMoves(nb, foe);
+      if (defenses.length === 0) return [{ move: m, reply: null, next: [] }];
+      if (n === 1) continue;
+      let ok = true;
+      let worst = null;   // 取抵抗最久的應著當主變
+      let worstLen = -1;
+      for (const d of defenses) {
+        const db = applyMove(nb, d);
+        const sub = findMate(db, side, n - 1);
+        if (!sub) { ok = false; break; }
+        const len = subLength(sub);
+        if (len > worstLen) { worstLen = len; worst = { d, sub }; }
+      }
+      if (ok) {
+        const line = [{ move: m, reply: worst.d, next: worst.sub }];
+        return line;
+      }
+    }
+    return fallback;
+  }
+
+  function subLength(line) {
+    let n = 0, cur = line;
+    while (cur && cur.length) { n += cur[0].reply ? 2 : 1; cur = cur[0].next; }
+    return n;
+  }
+
+  // 把 findMate 的巢狀結果攤平成 [{from,to}, ...] 的著法序列
+  function flattenLine(line) {
+    const out = [];
+    let cur = line;
+    while (cur && cur.length) {
+      out.push(cur[0].move);
+      if (cur[0].reply) out.push(cur[0].reply);
+      cur = cur[0].next;
+    }
+    return out;
+  }
+
+  // 求出實際的最短連將殺步數（最多找到 maxN）
+  function mateDistance(board, side, maxN) {
+    for (let n = 1; n <= maxN; n++) {
+      if (findMate(board, side, n)) return n;
+    }
+    return 0;
+  }
+
+  // 列出所有能在 n 回合內連將殺的著法（用來判斷解答是否唯一）
+  function allMatingMoves(board, side, n) {
+    const res = [];
+    const foe = opposite(side);
+    for (const m of checkingMoves(board, side)) {
+      const nb = applyMove(board, m);
+      const defenses = legalMoves(nb, foe);
+      if (defenses.length === 0) { res.push(m); continue; }
+      if (n === 1) continue;
+      let ok = true;
+      for (const d of defenses) {
+        if (!findMate(applyMove(nb, d), side, n - 1)) { ok = false; break; }
+      }
+      if (ok) res.push(m);
+    }
+    return res;
+  }
+
+  return {
+    W, H, SIZE, RED, BLACK,
+    rowOf, colOf, at, onBoard,
+    colorOf, typeOf, opposite, inPalace, ownHalf,
+    parseFen, toFen, cloneBoard,
+    genMoves, legalMoves, movesFrom, isLegalMove, applyMove,
+    findKing, kingsFacing, inCheck, isMated, gameOver,
+    moveToChinese, NAMES,
+    checkingMoves, findMate, flattenLine, mateDistance, allMatingMoves,
+  };
+});
+</script>
+<script>
+/*
+ * board.js — 可動畫的象棋棋盤元件
+ *
+ * 棋子以絕對定位擺放，換位置時交由 CSS transition 產生滑動動畫，
+ * 因此每一步都看得到棋子實際「走」過去的過程。
+ */
+(function (root) {
+  'use strict';
+  const XQ = root.XQ;
+  const { W, H, at, rowOf, colOf } = XQ;
+
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const U = 100;                      // SVG 每格單位
+  const GW = (W - 1) * U, GH = (H - 1) * U;
+
+  function el(tag, cls, attrs) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (attrs) for (const k in attrs) n.setAttribute(k, attrs[k]);
+    return n;
+  }
+  function svgEl(tag, attrs) {
+    const n = document.createElementNS(SVG_NS, tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    return n;
+  }
+
+  /* ── 棋盤線條 ─────────────────────────────────────────── */
+  function buildGrid() {
+    // viewBox 必須剛好等於「交叉點範圍」，才會與棋子的百分比定位對齊；
+    // 外框畫在 viewBox 之外，靠 overflow:visible 顯示。
+    const svg = svgEl('svg', {
+      class: 'xq-grid',
+      viewBox: `0 0 ${GW} ${GH}`,
+      preserveAspectRatio: 'none',
+    });
+
+    const line = (x1, y1, x2, y2, cls) =>
+      svg.appendChild(svgEl('line', { x1, y1, x2, y2, class: cls || 'xq-line' }));
+
+    // 橫線 10 條
+    for (let r = 0; r < H; r++) line(0, r * U, GW, r * U);
+    // 直線：中間 7 條在楚河漢界處斷開
+    line(0, 0, 0, GH);
+    line(GW, 0, GW, GH);
+    for (let c = 1; c < W - 1; c++) {
+      line(c * U, 0, c * U, 4 * U);
+      line(c * U, 5 * U, c * U, GH);
+    }
+    // 九宮斜線
+    line(3 * U, 0, 5 * U, 2 * U); line(5 * U, 0, 3 * U, 2 * U);
+    line(3 * U, 7 * U, 5 * U, 9 * U); line(5 * U, 7 * U, 3 * U, 9 * U);
+    // 外框
+    svg.appendChild(svgEl('rect', {
+      x: -U * 0.18, y: -U * 0.18, width: GW + U * 0.36, height: GH + U * 0.36,
+      class: 'xq-border', fill: 'none',
+    }));
+
+    // 炮位與兵位的「星位」標記
+    const stars = [[2,1],[2,7],[3,0],[3,2],[3,4],[3,6],[3,8],
+                   [6,0],[6,2],[6,4],[6,6],[6,8],[7,1],[7,7]];
+    for (const [r, c] of stars) {
+      const x = c * U, y = r * U, d = 9, g = 5;
+      for (const [sx, sy] of [[-1,-1],[1,-1],[-1,1],[1,1]]) {
+        if ((c === 0 && sx < 0) || (c === W - 1 && sx > 0)) continue;
+        const px = x + sx * g, py = y + sy * g;
+        svg.appendChild(svgEl('path', {
+          class: 'xq-star',
+          d: `M ${px} ${py + sy * d} L ${px} ${py} L ${px + sx * d} ${py}`,
+          fill: 'none',
+        }));
+      }
+    }
+
+    // 楚河漢界
+    const t = (x, txt) => {
+      const n = svgEl('text', { x, y: 4.5 * U, class: 'xq-river-text' });
+      n.textContent = txt;
+      svg.appendChild(n);
+    };
+    t(GW * 0.27, '楚 河'); t(GW * 0.73, '漢 界');
+    return svg;
+  }
+
+  /* ── 棋盤元件 ─────────────────────────────────────────── */
+  class Board {
+    /**
+     * @param {HTMLElement} host  容器
+     * @param {object} opts
+     *   interactive  是否可點擊走子
+     *   onMove(from,to)  使用者走子時的回呼
+     *   coords       是否顯示路數座標
+     */
+    constructor(host, opts) {
+      this.opts = Object.assign({ interactive: false, coords: true }, opts || {});
+      this.board = new Array(90).fill('');
+      this.side = XQ.RED;
+      this.selected = -1;
+      this.hints = [];
+      this.locked = false;
+      this._pieces = new Map();     // id → {el, code, index}
+      this._occ = new Array(90).fill(null);
+      this._seq = 0;
+
+      host.classList.add('xq-host');
+      host.innerHTML = '';
+
+      if (this.opts.coords) host.appendChild(this._coordBar('top'));
+
+      const frame = el('div', 'xq-frame');
+      const inner = el('div', 'xq-inner');
+      inner.appendChild(buildGrid());
+      this.layerMark = el('div', 'xq-layer xq-marks');
+      this.layerPiece = el('div', 'xq-layer xq-pieces');
+      inner.append(this.layerMark, this.layerPiece);
+      frame.appendChild(inner);
+      host.appendChild(frame);
+
+      if (this.opts.coords) host.appendChild(this._coordBar('bottom'));
+
+      this.inner = inner;
+      inner.addEventListener('click', (e) => this._onClick(e));
+      this.host = host;
+    }
+
+    _coordBar(which) {
+      const bar = el('div', 'xq-coords xq-coords-' + which);
+      const labels = which === 'top'
+        ? ['1','2','3','4','5','6','7','8','9']       // 黑方路數，由黑方右手邊起算
+        : ['九','八','七','六','五','四','三','二','一']; // 紅方路數，由紅方右手邊起算
+      labels.forEach((s, i) => {
+        const n = el('span', null);
+        n.textContent = s;
+        n.style.left = (i / (W - 1)) * 100 + '%';     // 與棋子用同一套定位
+        bar.appendChild(n);
+      });
+      return bar;
+    }
+
+    /* 座標換算 */
+    _place(node, index) {
+      node.style.left = (colOf(index) / (W - 1)) * 100 + '%';
+      node.style.top = (rowOf(index) / (H - 1)) * 100 + '%';
+    }
+
+    /* ── 設定局面（不做動畫） ─────────────────────────── */
+    setPosition(board, side) {
+      this.board = board.slice();
+      if (side) this.side = side;
+      this.selected = -1;
+      this.layerPiece.innerHTML = '';
+      this._pieces.clear();
+      this._occ.fill(null);
+      for (let i = 0; i < 90; i++) if (this.board[i]) this._spawn(this.board[i], i);
+      this.clearMarks();
+      this.renderHints();
+    }
+
+    setFen(fen) {
+      const p = XQ.parseFen(fen);
+      this.setPosition(p.board, p.side);
+    }
+
+    _spawn(code, index) {
+      const id = ++this._seq;
+      const node = el('div', 'xq-piece ' + (XQ.colorOf(code) === XQ.RED ? 'red' : 'black'));
+      node.dataset.id = id;
+      const face = el('span', 'xq-face');
+      face.textContent = XQ.NAMES[XQ.colorOf(code)][XQ.typeOf(code)];
+      node.appendChild(face);
+      this._place(node, index);
+      this.layerPiece.appendChild(node);
+      this._pieces.set(id, { el: node, code, index });
+      this._occ[index] = id;
+      return id;
+    }
+
+    /* ── 走一步（有動畫） ──────────────────────────────── */
+    move(from, to, opts) {
+      const dur = (opts && opts.duration) != null ? opts.duration : 380;
+      const id = this._occ[from];
+      if (id == null) { // 保險：資料不同步時直接重繪
+        this.board = XQ.applyMove(this.board, { from, to });
+        this.setPosition(this.board, this.side);
+        return Promise.resolve();
+      }
+      const capturedId = this._occ[to];
+      if (capturedId != null) {
+        const cap = this._pieces.get(capturedId);
+        cap.el.classList.add('captured');
+        this._pieces.delete(capturedId);
+        setTimeout(() => cap.el.remove(), dur + 60);
+      }
+
+      const p = this._pieces.get(id);
+      this._occ[from] = null;
+      this._occ[to] = id;
+      p.index = to;
+      p.el.style.transitionDuration = dur + 'ms';
+      p.el.classList.add('moving');
+      this._place(p.el, to);
+
+      this.board = XQ.applyMove(this.board, { from, to });
+      this.side = XQ.opposite(XQ.colorOf(p.code));
+      this.selected = -1;
+      this.markMove(from, to);
+      this.renderHints();
+
+      return new Promise((res) => setTimeout(() => {
+        p.el.classList.remove('moving');
+        this._flagCheck();
+        res();
+      }, dur + 20));
+    }
+
+    /* ── 標記 ─────────────────────────────────────────── */
+    clearMarks() {
+      this.layerMark.innerHTML = '';
+      this.layerPiece.querySelectorAll('.sel,.in-check')
+        .forEach((n) => n.classList.remove('sel', 'in-check'));
+    }
+
+    markMove(from, to) {
+      this.layerMark.innerHTML = '';
+      for (const [i, cls] of [[from, 'from'], [to, 'to']]) {
+        const m = el('div', 'xq-mark xq-last ' + cls);
+        this._place(m, i);
+        this.layerMark.appendChild(m);
+      }
+      this._lastMove = [from, to];
+    }
+
+    _flagCheck() {
+      this.layerPiece.querySelectorAll('.in-check').forEach((n) => n.classList.remove('in-check'));
+      for (const s of [XQ.RED, XQ.BLACK]) {
+        if (XQ.inCheck(this.board, s)) {
+          const k = XQ.findKing(this.board, s);
+          const id = this._occ[k];
+          if (id != null) this._pieces.get(id).el.classList.add('in-check');
+        }
+      }
+    }
+
+    /** 顯示某格可走的位置（教學用；不改變選取狀態） */
+    showMovesOf(index) {
+      this.selected = index;
+      this.renderHints();
+    }
+
+    renderHints() {
+      this.layerMark.querySelectorAll('.xq-dot,.xq-cap').forEach((n) => n.remove());
+      this.layerPiece.querySelectorAll('.sel').forEach((n) => n.classList.remove('sel'));
+      if (this.selected < 0) return;
+      const id = this._occ[this.selected];
+      if (id != null) this._pieces.get(id).el.classList.add('sel');
+      for (const m of XQ.movesFrom(this.board, this.selected)) {
+        const d = el('div', this.board[m.to] ? 'xq-mark xq-cap' : 'xq-mark xq-dot');
+        this._place(d, m.to);
+        this.layerMark.appendChild(d);
+      }
+    }
+
+    /* ── 點擊處理 ─────────────────────────────────────── */
+    _indexFromEvent(e) {
+      const r = this.inner.getBoundingClientRect();
+      const c = Math.round(((e.clientX - r.left) / r.width) * (W - 1));
+      const row = Math.round(((e.clientY - r.top) / r.height) * (H - 1));
+      if (c < 0 || c >= W || row < 0 || row >= H) return -1;
+      // 點得太偏就忽略，避免誤觸
+      const dx = Math.abs((e.clientX - r.left) / r.width * (W - 1) - c);
+      const dy = Math.abs((e.clientY - r.top) / r.height * (H - 1) - row);
+      if (dx > 0.48 || dy > 0.48) return -1;
+      return at(row, c);
+    }
+
+    _onClick(e) {
+      if (this.locked) return;
+      const i = this._indexFromEvent(e);
+      if (i < 0) return;
+      if (this.opts.onSquare) { this.opts.onSquare(i); return; }   // 擺棋模式
+      if (!this.opts.interactive) return;
+      const piece = this.board[i];
+
+      if (this.selected >= 0 && this.selected !== i) {
+        if (XQ.isLegalMove(this.board, this.selected, i)) {
+          const from = this.selected;
+          this.selected = -1;
+          if (this.opts.onMove) this.opts.onMove(from, i);
+          return;
+        }
+      }
+      if (piece && XQ.colorOf(piece) === this.side) {
+        this.selected = this.selected === i ? -1 : i;
+      } else {
+        this.selected = -1;
+      }
+      this.renderHints();
+    }
+  }
+
+  root.XQBoard = { Board, buildGrid };
+})(window);
+</script>
+<script>
+/*
+ * data.js — 教學內容、戰術範例與殘局題庫
+ *
+ * 所有局面與著法都經過規則引擎驗算：
+ *   ・起始局面合法（將帥在九宮、未輪走方沒有被將軍）
+ *   ・標示的殺著確實能形成連續將軍的 N 步殺
+ *   ・主變終局對方確實無著可走
+ */
+(function (root) {
+  'use strict';
+
+  const START_FEN = 'rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR r';
+
+  /* ── 一、棋子走法 ──────────────────────────────────── */
+  const PIECES = [
+    {
+      id: 'rook', name: '車（俥）', glyph: '車',
+      fen: '3k5/9/9/2p6/9/2R2P3/9/9/9/4K4 r', focus: 47,
+      rule: '沿著直線或橫線走，格數不限，路上不能有任何棋子擋住。',
+      detail: '車是象棋中威力最大的子力，一個車在空曠的棋盤上可以控制十七個點。' +
+        '圖中紅車向右被自己的兵擋住，向上則可以一直走到黑卒的位置把它吃掉。',
+    },
+    {
+      id: 'horse', name: '馬（傌）', glyph: '馬',
+      fen: '4k4/9/9/9/4p4/4N4/9/9/9/4K4 r', focus: 49,
+      rule: '走「日」字：先直走一格再斜走一格。若前方緊鄰的那一格有子，就被「蹩馬腿」，該方向不能走。',
+      detail: '圖中紅傌正上方被黑卒擋住，因此向前的兩個走法都消失了，只剩下六個落點。' +
+        '實戰中「蹩馬腿」是限制對方馬力最常用的手段。',
+    },
+    {
+      id: 'cannon', name: '炮（砲）', glyph: '炮',
+      fen: '3k5/9/1r7/9/1p7/1C7/9/9/9/4K4 r', focus: 46,
+      rule: '不吃子時走法與車相同；吃子時必須隔著一個棋子跳過去打，中間那個子稱為「砲架」。',
+      detail: '圖中紅炮與黑車之間剛好隔著一個黑卒，這個卒就是砲架，所以紅炮可以打到黑車。' +
+        '砲架不分敵我，只能有一個，多一個或少一個都打不到。',
+    },
+    {
+      id: 'elephant', name: '相（象）', glyph: '相',
+      fen: '3k5/9/9/9/9/9/9/2B6/4K4/9 r', focus: 65,
+      rule: '走「田」字，一次斜走兩格，不能過河；「田」字中心有子時被「塞象眼」，不能走。',
+      detail: '相（象）是防守子力，只能在自己的半邊活動，共有七個固定的位置。' +
+        '「缺相怕炮」——少了相，對方的炮就容易長驅直入。',
+    },
+    {
+      id: 'advisor', name: '仕（士）', glyph: '仕',
+      fen: '3k5/9/9/9/9/9/9/9/4A4/4K4 r', focus: 76,
+      rule: '只能在九宮內沿著斜線走一格。',
+      detail: '仕（士）是將帥最貼身的護衛，永遠走斜線，而且離不開九宮的五個交叉點。' +
+        '「缺士怕車」是殘局的重要常識。',
+    },
+    {
+      id: 'king', name: '帥（將）', glyph: '帥',
+      fen: '4k4/9/9/9/4p4/9/9/9/9/4K4 r', focus: 85,
+      rule: '只能在九宮內沿著直線或橫線走一格，不能走斜線，也不能出九宮。',
+      detail: '此外還有一條特別規定：雙方的將與帥不能在同一條直線上直接照面（俗稱「白臉將」或「對面笑」），' +
+        '中間必須至少隔著一個棋子。這條規則常常被拿來當作殺棋的工具。',
+    },
+    {
+      id: 'pawn', name: '兵（卒）', glyph: '兵',
+      fen: '3k5/9/9/9/4P4/9/9/9/9/4K4 r', focus: 40,
+      rule: '過河前只能向前走一格；過河之後可以向前或左右橫走一格，但永遠不能後退。',
+      detail: '未過河的兵只有一個走法；過了河的兵有三個走法，威力大增，' +
+        '所謂「小卒過河頂大車」，指的就是逼近九宮的兵卒常常是殺棋的關鍵。',
+    },
+  ];
+
+  /* ── 二、記譜法示範（當頭炮對屏風馬）─────────────── */
+  const OPENING = {
+    title: '當頭炮對屏風馬',
+    fen: START_FEN,
+    intro: '這是象棋中最常見的開局之一。紅方一上來就把炮平到中路瞄準黑方中兵（當頭炮），' +
+      '黑方則用兩隻馬保護中卒（屏風馬）。跟著棋譜走一遍，順便熟悉記譜的寫法。',
+    steps: [
+      { from: 70, to: 67, note: '紅炮平到中路，直接瞄準黑方的中卒，這一步叫「當頭炮」。' },
+      { from: 7, to: 24, note: '黑方跳馬保護中卒。' },
+      { from: 88, to: 69, note: '紅方也跳正馬，保護自己的中兵。' },
+      { from: 8, to: 7, note: '黑車平過來，準備讓直車出動。' },
+      { from: 89, to: 88, note: '紅方同樣平車，準備出直車。' },
+      { from: 1, to: 20, note: '黑方另一隻馬也跳起來，兩馬並列如屏風，「屏風馬」因此得名。' },
+      { from: 56, to: 47, note: '挺兵，為自己的傌開出通路。' },
+      { from: 33, to: 42, note: '黑方同樣挺卒活馬。' },
+      { from: 88, to: 34, note: '紅車過河壓住黑馬，這是這個開局的主要攻法。' },
+      { from: 25, to: 26, note: '黑砲平到邊路，準備兌車解除壓力。' },
+      { from: 34, to: 33, note: '紅車平過去吃卒並繼續騷擾。' },
+      { from: 26, to: 17, note: '黑砲退一步保住底線，雙方形成常見的攻守局面。' },
+    ],
+  };
+
+  /* ── 三、戰術（殺法）範例 ─────────────────────────── */
+  const TACTICS = [
+    {
+      id: 'ma-hou-pao', name: '馬後炮', mateIn: 1,
+      fen: '4k4/9/4N4/9/9/C8/3p5/9/1r7/4K4 r',
+      idea: '馬先站到將的正前方控制兩肩，炮再沿著同一條直線、以馬當砲架轟過去。',
+      key: '看到「馬佔中路、炮可以平到同一條線」，就要想到馬後炮。',
+      steps: [{ from: 45, to: 49, note: '炮平到中線，以自家的傌當砲架直接叫將。黑將左右兩肩都被傌封住，往前一步仍在砲口上，無路可逃。' }],
+    },
+    {
+      id: 'men-gong', name: '悶宮', mateIn: 1,
+      fen: '3ak4/4r4/9/9/2C6/9/9/9/9/3K5 r',
+      idea: '對方的將被自己的子力堵得死死的，紅炮只要能叫將就是絕殺。',
+      key: '對方九宮裡塞滿了自己的棋子時，先找有沒有炮可以叫將。',
+      steps: [{ from: 38, to: 2, note: '炮沉到底線，用黑方自己的士當砲架叫將。黑將的一側是自己的士、正下方是自己的車，橫著走仍在砲口下——被自己的子力「悶」死。' }],
+    },
+    {
+      id: 'chong-pao', name: '重炮', mateIn: 1,
+      fen: '2C1k4/9/3aPa3/9/9/C8/9/9/9/4K4 r',
+      idea: '兩隻炮疊在同一條線上，前面那隻炮就是後面那隻炮的砲架。',
+      key: '手上有雙炮，又能疊成一線對準將，威力等於一記無法阻擋的重砲。',
+      steps: [{ from: 45, to: 0, note: '後炮沉底與前炮疊成一線，前炮就是砲架。黑將沿底線怎麼移動都還在砲口上，想上到中路又被紅兵看死。' }],
+    },
+    {
+      id: 'wo-cao-ma', name: '臥槽馬', mateIn: 1,
+      fen: '2bak4/4a4/9/7N1/9/5R3/9/9/9/4K4 r',
+      idea: '馬跳到對方底線第二排、將的斜前方（俗稱「槽位」）叫將，通常配合車一起使用。',
+      key: '臥槽馬叫將時，只要把將的其他逃路封住就是殺。',
+      steps: [{ from: 34, to: 15, note: '傌跳槽叫將。黑將一側被自己的士堵住，另一側被紅車鎖住直線，中路又有自己的士擋路。' }],
+    },
+    {
+      id: 'tie-men-shuan', name: '鐵門栓', mateIn: 1,
+      fen: '3akab2/R8/2N6/9/9/4C4/9/9/9/4K4 r',
+      idea: '中炮牢牢鎖住中路，讓對方的士不敢動；車就可以大搖大擺闖進九宮。',
+      key: '中炮像一根門栓——士一旦動到中路，就變成紅炮的砲架，等於自己開門。',
+      steps: [{ from: 9, to: 13, note: '車直接闖入九宮叫將。黑將吃車有紅傌看著；黑士若吃車，就成了紅方中炮的砲架，反而讓炮直接打到自己的將，因此吃不得。' }],
+    },
+    {
+      id: 'shuang-jiang', name: '雙將', mateIn: 1,
+      fen: '3akab2/2P6/4N4/9/4R4/9/9/9/9/3K5 r',
+      idea: '一步棋同時有兩個子叫將。雙將不能用墊子或吃子化解，對方只能動將。',
+      key: '身後有車炮的直線時，中間的子一跳開就可能形成雙將。',
+      steps: [{ from: 22, to: 15, note: '傌一跳，自己叫將的同時也讓身後的俥露出直線，形成雙將。黑方只能動將，可是三個逃格全被封死。' }],
+    },
+    {
+      id: 'bai-lian-jiang', name: '白臉將', mateIn: 1,
+      fen: '2bk5/R8/1N1a5/9/9/7p1/9/9/9/4K4 r',
+      idea: '利用「將帥不能照面」的規則，讓紅帥不出九宮也能封住對方將的退路。',
+      key: '算殺時別忘了自己的帥——它佔住的那條直線，對方的將是不能站上去的。',
+      steps: [{ from: 9, to: 12, note: '車貼身叫將。黑將吃車有紅傌守著；唯一的逃路是平到中路，可是那樣就與紅帥照面，規則不允許——紅帥等於多守了一格。' }],
+    },
+    {
+      id: 'shuang-che-cuo', name: '雙車錯', mateIn: 2,
+      fen: '4akb2/9/1R1a5/9/8R/9/9/9/9/4K4 r',
+      idea: '兩支車輪流叫將，一支逼、一支殺，對方顧此失彼。',
+      key: '雙車在手時，先用一支車逼對方的子離開防守位置，另一支車再切入。',
+      steps: [
+        { from: 44, to: 41, note: '第一支車平到黑將的直線上叫將。' },
+        { from: 4, to: 14, note: '黑方只能上士墊將擋住。' },
+        { from: 19, to: 1, note: '士一離開底線，第二支車立刻沉底橫掃——這就是雙車錯。' },
+      ],
+    },
+  ];
+
+  /* ── 四、殘局挑戰 ─────────────────────────────────── */
+  const PUZZLES = [
+    {
+      id: 'p1', name: '小兵建功', level: '入門', mateIn: 1,
+      fen: '4kr3/3P5/2N6/9/9/9/6p2/9/9/3K5 r',
+      hint: '黑將的一側被自己的車佔住了，中路又有紅傌控制。找一個能貼身叫將、對方又吃不掉的子。',
+      note: '本題有兩種殺法，都可以過關。',
+      steps: [{ from: 12, to: 3, note: '小兵挺進底線叫將。黑將想吃兵，可是紅傌正看著這一格；左右兩邊也都是死路。' }],
+    },
+    {
+      id: 'p2', name: '藏在後面的炮', level: '入門', mateIn: 1,
+      fen: '9/4a4/3N1k3/9/5C3/9/9/9/4K4/9 r',
+      hint: '紅炮已經對準了黑將所在的直線，就差一個砲架。',
+      steps: [{ from: 21, to: 32, note: '傌退到炮與將之間當砲架，形成馬後炮。黑將往中路逃會與紅帥照面（規則不允許），往前一步仍在砲口上。' }],
+    },
+    {
+      id: 'p3', name: '車炮聯手', level: '入門', mateIn: 1,
+      fen: '5k3/9/4P4/4C1R2/9/9/9/9/9/4K4 r',
+      hint: '先用車把將的直線鎖住，再檢查它往中路逃的那一格有沒有人管。',
+      steps: [{ from: 33, to: 32, note: '車平到黑將的直線上叫將。黑將往中路逃，剛好落入以紅兵為砲架的炮口。' }],
+    },
+    {
+      id: 'p4', name: '帥的暗中相助', level: '初級', mateIn: 1,
+      fen: '3k5/9/b4C3/9/9/7R1/9/4K4/9/9 r',
+      hint: '先看看紅帥站在哪一條直線上——黑將能平到中路嗎？',
+      steps: [{ from: 52, to: 48, note: '車平過來叫將。黑將往中路逃就會與紅帥照面，往前又被車控制，只能束手就擒。' }],
+    },
+    {
+      id: 'p5', name: '前車後車', level: '中級', mateIn: 2,
+      fen: '5aR2/5k3/3a5/6R2/9/9/9/3K5/9/9 r',
+      hint: '兩支車在同一條直線上，記譜時要用「前車」「後車」來區分。想想怎麼一前一後把黑將逼死。',
+      steps: [
+        { from: 6, to: 15, note: '前車退一步貼身叫將，逼黑將離開原位。' },
+        { from: 14, to: 23, note: '黑將只能往前走。' },
+        { from: 33, to: 24, note: '後車跟進叫將，兩車一前一後封死所有退路。' },
+      ],
+    },
+    {
+      id: 'p6', name: '棄兵引將', level: '中級', mateIn: 2,
+      fen: '3a1a3/9/5k3/4P4/9/6C2/6C2/9/4K4/9 r',
+      hint: '紅方有兩隻炮疊在同一條線上。先想辦法把黑將引到你要的位置。',
+      steps: [
+        { from: 31, to: 32, note: '兵平過來貼身叫將，把黑將逼退一格。' },
+        { from: 23, to: 14, note: '黑將只能後退。' },
+        { from: 51, to: 50, note: '前炮平到黑將的直線上，以紅兵為砲架，後炮再頂上——重炮成殺。' },
+      ],
+    },
+    {
+      id: 'p7', name: '大膽穿心', level: '高級', mateIn: 3,
+      fen: '2bak1b2/R3a4/9/4R4/9/9/4C4/9/9/4K4 r',
+      hint: '黑方的中士是整個防線的樞紐。捨得下本錢嗎？',
+      steps: [
+        { from: 31, to: 13, note: '車直接吃掉中士叫將，這一手就叫「大膽穿心」——寧可送車也要拆掉對方的防線。' },
+        { from: 4, to: 5, note: '黑將只能平開。' },
+        { from: 13, to: 14, note: '車跟著平過去繼續叫將。' },
+        { from: 5, to: 4, note: '黑將被迫走回中路。' },
+        { from: 9, to: 13, note: '另一支車切入中路，配合底炮完成絕殺。' },
+      ],
+    },
+    {
+      id: 'p8', name: '棄兵引士', level: '高級', mateIn: 3,
+      fen: '4ka3/3P5/9/9/1N1R5/9/9/9/9/3K5 r',
+      hint: '黑方只剩一個士。先逼它動起來，再讓它離不開原位。',
+      steps: [
+        { from: 39, to: 40, note: '車平中叫將。' },
+        { from: 5, to: 13, note: '黑方只能上士墊將。' },
+        { from: 12, to: 13, note: '紅兵吃掉墊將的士繼續叫將；有車在後面保護，這個兵吃不得。' },
+        { from: 4, to: 5, note: '黑將只好平開。' },
+        { from: 40, to: 41, note: '車跟著平過去，一錘定音。' },
+      ],
+    },
+    {
+      id: 'p9', name: '車馬合擊', level: '高級', mateIn: 3,
+      fen: '9/3ka4/P4aN2/9/9/3p3R1/9/9/4K4/9 r',
+      hint: '車與馬是最好的搭檔：車負責封鎖直線，馬負責跳到對方料不到的位置。',
+      steps: [
+        { from: 52, to: 48, note: '車吃掉黑卒並平到黑將的直線上叫將。' },
+        { from: 13, to: 21, note: '黑方上士墊將。' },
+        { from: 24, to: 5, note: '傌跳到底線叫將——這一步是全題的關鍵，黑將無法吃馬。' },
+        { from: 12, to: 3, note: '黑將只能後退。' },
+        { from: 48, to: 21, note: '車吃掉擋路的士，直線貫通，絕殺。' },
+      ],
+    },
+  ];
+
+  /* ── 五、名詞小辭典 ───────────────────────────────── */
+  const GLOSSARY = [
+    ['當頭炮', '把炮平到中路，直接瞄準對方中兵（卒）的開局走法。'],
+    ['屏風馬', '兩隻馬跳到正馬位置保護中卒，形如屏風，是應付當頭炮最常見的陣式。'],
+    ['沉底', '把車或炮走到對方的底線（最後一排）。'],
+    ['過河', '棋子越過楚河漢界進入對方的半邊。'],
+    ['將軍', '走出一步棋直接攻擊對方的將（帥）；被將軍的一方必須立刻應對。'],
+    ['應將', '化解將軍的方法共三種：吃掉將軍的子、用子擋在中間（墊將）、把將移開。'],
+    ['絕殺', '對方已經被將軍且三種應將方法都無效，棋局結束。'],
+    ['困斃', '輪到走棋的一方沒有被將軍，卻一步合法棋也走不出來。象棋規則中同樣判負。'],
+    ['閒著', '不叫將、也不直接構成威脅的一手棋，常用來調整位置或等待。'],
+    ['牽制', '讓對方的某個子不能動——一動就會損失更大的子或被將軍。'],
+  ];
+
+  root.XQData = { START_FEN, PIECES, OPENING, TACTICS, PUZZLES, GLOSSARY };
+})(window);
+</script>
+<script>
+/*
+ * app.js — 網站互動邏輯
+ */
+(function (root) {
+  'use strict';
+  const XQ = root.XQ;
+  const D = root.XQData;
+  const { Board } = root.XQBoard;
+
+  const $ = (sel, ctx) => (ctx || document).querySelector(sel);
+  const $$ = (sel, ctx) => Array.from((ctx || document).querySelectorAll(sel));
+  const el = (tag, cls, text) => {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  };
+
+  /* ── 共用：一條著法線的播放器 ─────────────────────────
+   * 提供上一步／下一步／自動播放，往前走時棋子是動畫滑過去的。
+   */
+  class LinePlayer {
+    constructor(boardHost, listHost, opts) {
+      this.opts = opts || {};
+      this.board = new Board(boardHost, { interactive: false });
+      this.listHost = listHost;
+      this.cur = 0;              // 已經走了幾步
+      this.playing = false;
+      this.steps = [];
+    }
+
+    load(fen, steps, opts) {
+      this.stop();
+      this.fen = fen;
+      this.steps = steps || [];
+      this.hideNotes = !!(opts && opts.hideNotes);
+      // 預先算出每一步的中文記譜與各階段局面
+      const start = XQ.parseFen(fen);
+      let b = start.board;
+      this.frames = [b.slice()];
+      this.texts = [];
+      for (const s of this.steps) {
+        this.texts.push(XQ.moveToChinese(b, s.from, s.to));
+        b = XQ.applyMove(b, { from: s.from, to: s.to });
+        this.frames.push(b.slice());
+      }
+      this.cur = 0;
+      this.board.setPosition(this.frames[0], start.side);
+      this.renderList();
+      this.emit();
+    }
+
+    renderList() {
+      if (!this.listHost) return;
+      this.listHost.innerHTML = '';
+      const ol = el('ol');
+      this.steps.forEach((s, i) => {
+        const redMove = i % 2 === 0;
+        const li = el('li', (redMove ? 'red' : 'black') + (this.hideNotes ? ' hidden-note' : ''));
+        li.append(
+          el('span', 'n', redMove ? String(i / 2 + 1) + '.' : ''),
+          el('span', 'mv', this.texts[i]),
+          el('span', 'note', s.note || '')
+        );
+        li.addEventListener('click', () => this.goto(i + 1));
+        ol.appendChild(li);
+      });
+      this.listHost.appendChild(ol);
+      this.markList();
+    }
+
+    revealNotes() {
+      this.hideNotes = false;
+      $$('li', this.listHost).forEach((li) => li.classList.remove('hidden-note'));
+    }
+
+    markList() {
+      if (!this.listHost) return;
+      $$('li', this.listHost).forEach((li, i) => li.classList.toggle('on', i === this.cur - 1));
+      const on = $('li.on', this.listHost);
+      if (on && on.scrollIntoView) on.scrollIntoView({ block: 'nearest' });
+    }
+
+    /** 跳到第 n 步之後的局面；往前一步用動畫，其餘直接重繪 */
+    goto(n, animate) {
+      n = Math.max(0, Math.min(this.steps.length, n));
+      if (n === this.cur) return Promise.resolve();
+      const forwardOne = n === this.cur + 1;
+      if (forwardOne && animate !== false) {
+        const s = this.steps[this.cur];
+        this.cur = n;
+        this.markList();
+        this.emit();
+        return this.board.move(s.from, s.to);
+      }
+      this.cur = n;
+      const side = n % 2 === 0 ? XQ.parseFen(this.fen).side
+        : XQ.opposite(XQ.parseFen(this.fen).side);
+      this.board.setPosition(this.frames[n], side);
+      if (n > 0) {
+        const s = this.steps[n - 1];
+        this.board.markMove(s.from, s.to);
+      }
+      this.board._flagCheck();
+      this.markList();
+      this.emit();
+      return Promise.resolve();
+    }
+
+    next() { return this.goto(this.cur + 1); }
+    prev() { return this.goto(this.cur - 1); }
+    reset() { this.stop(); return this.goto(0); }
+
+    async play() {
+      if (this.playing) { this.stop(); return; }
+      if (this.cur >= this.steps.length) await this.goto(0);
+      this.playing = true;
+      this.emit();
+      while (this.playing && this.cur < this.steps.length) {
+        await this.next();
+        await new Promise((r) => setTimeout(r, 620));
+      }
+      this.playing = false;
+      this.emit();
+    }
+
+    stop() { this.playing = false; this.emit(); }
+    emit() { if (this.opts.onChange) this.opts.onChange(this); }
+  }
+
+  /* ── 建立標準控制列 ───────────────────────────────── */
+  function makeControls(player, extra) {
+    const bar = el('div', 'controls');
+    const mk = (label, fn, cls) => {
+      const b = el('button', 'btn' + (cls ? ' ' + cls : ''), label);
+      b.addEventListener('click', fn);
+      bar.appendChild(b);
+      return b;
+    };
+    const bFirst = mk('⏮ 開始', () => player.reset());
+    const bPrev = mk('← 上一步', () => player.prev());
+    const bNext = mk('下一步 →', () => player.next());
+    const bPlay = mk('▶ 自動播放', () => player.play(), 'primary');
+    if (extra) extra(mk);
+    player.opts.onChange = (p) => {
+      bFirst.disabled = bPrev.disabled = p.cur === 0 || p.playing;
+      bNext.disabled = p.cur >= p.steps.length || p.playing;
+      bPlay.textContent = p.playing ? '⏸ 暫停' : (p.cur >= p.steps.length ? '↺ 重新播放' : '▶ 自動播放');
+    };
+    return bar;
+  }
+
+  /* ── 一、棋子走法 ─────────────────────────────────── */
+  function initRules() {
+    const host = $('#rules-board');
+    const board = new Board(host, { interactive: false });
+    const listHost = $('#rules-list');
+    const info = $('#rules-info');
+    let cur = D.PIECES[0];
+
+    function show(p) {
+      cur = p;
+      const pos = XQ.parseFen(p.fen);
+      board.setPosition(pos.board, pos.side);
+      board.showMovesOf(p.focus);
+      info.innerHTML = '';
+      info.append(
+        el('h3', null, p.name),
+        Object.assign(el('div', 'rule-box'), { textContent: p.rule }),
+        el('p', null, p.detail),
+        el('p', 'lead', '棋盤上的綠點就是這個棋子目前所有合法的落點（由規則引擎即時算出）。')
+      );
+      $$('button', listHost).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === p.id)));
+    }
+
+    D.PIECES.forEach((p) => {
+      const b = el('button', 'pick');
+      b.dataset.id = p.id;
+      const t = el('div', 't');
+      t.append(el('span', null, p.glyph + '　' + p.name));
+      b.append(t, el('div', 'd', p.rule));
+      b.addEventListener('click', () => show(p));
+      listHost.appendChild(b);
+    });
+    show(cur);
+  }
+
+  /* ── 二、記譜法 ───────────────────────────────────── */
+  function initNotation() {
+    const player = new LinePlayer($('#nota-board'), $('#nota-list'), {});
+    $('#nota-controls').replaceWith(makeControls(player));
+    player.load(D.OPENING.fen, D.OPENING.steps);
+  }
+
+  /* ── 三、戰術 ─────────────────────────────────────── */
+  function initTactics() {
+    const player = new LinePlayer($('#tac-board'), $('#tac-list'), {});
+    const controls = makeControls(player);
+    $('#tac-controls').replaceWith(controls);
+    const listHost = $('#tac-list-pick');
+    const info = $('#tac-info');
+    let cur = null;
+
+    function show(t) {
+      cur = t;
+      info.innerHTML = '';
+      info.append(
+        el('h3', null, t.name + '　（' + t.mateIn + ' 步殺）'),
+        Object.assign(el('div', 'rule-box'), { textContent: t.idea }),
+        el('p', null, '辨認要領：' + t.key)
+      );
+      player.load(t.fen, t.steps);
+      $$('button', listHost).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === t.id)));
+    }
+
+    D.TACTICS.forEach((t) => {
+      const b = el('button', 'pick');
+      b.dataset.id = t.id;
+      const title = el('div', 't');
+      title.append(el('span', null, t.name), el('span', 'tag', t.mateIn + ' 步殺'));
+      b.append(title, el('div', 'd', t.idea));
+      b.addEventListener('click', () => show(t));
+      listHost.appendChild(b);
+    });
+    show(D.TACTICS[0]);
+  }
+
+  /* ── 四、殘局挑戰 ─────────────────────────────────── */
+  const SOLVED_KEY = 'xq-solved';
+  const loadSolved = () => {
+    try { return new Set(JSON.parse(localStorage.getItem(SOLVED_KEY) || '[]')); }
+    catch (e) { return new Set(); }
+  };
+  const saveSolved = (s) => {
+    try { localStorage.setItem(SOLVED_KEY, JSON.stringify(Array.from(s))); } catch (e) { /* 忽略 */ }
+  };
+
+  class PuzzleView {
+    constructor() {
+      this.solved = loadSolved();
+      this.boardHost = $('#puz-board');
+      this.board = new Board(this.boardHost, {
+        interactive: true,
+        onMove: (f, t) => this.userMove(f, t),
+      });
+      this.status = $('#puz-status');
+      this.listHost = $('#puz-moves');
+      this.info = $('#puz-info');
+      this.pickHost = $('#puz-pick');
+      this.buildPicker();
+      this.buildControls();
+    }
+
+    buildPicker() {
+      D.PUZZLES.forEach((p) => {
+        const b = el('button', 'pick');
+        b.dataset.id = p.id;
+        const t = el('div', 't');
+        t.append(
+          el('span', null, p.name),
+          el('span', 'tag', p.level),
+          el('span', 'tag' + (this.solved.has(p.id) ? ' solved' : ''), this.solved.has(p.id) ? '✓ 已破解' : p.mateIn + ' 步殺')
+        );
+        b.append(t);
+        b.addEventListener('click', () => this.load(p));
+        this.pickHost.appendChild(b);
+      });
+    }
+
+    refreshPicker() {
+      $$('button', this.pickHost).forEach((b) => {
+        b.setAttribute('aria-pressed', String(this.cur && b.dataset.id === this.cur.id));
+        const tags = $$('.tag', b);
+        const p = D.PUZZLES.find((x) => x.id === b.dataset.id);
+        if (this.solved.has(p.id)) {
+          tags[1].textContent = '✓ 已破解';
+          tags[1].classList.add('solved');
+        }
+      });
+    }
+
+    buildControls() {
+      const bar = el('div', 'controls');
+      const mk = (label, fn, cls) => {
+        const b = el('button', 'btn' + (cls ? ' ' + cls : ''), label);
+        b.addEventListener('click', fn);
+        bar.appendChild(b);
+        return b;
+      };
+      mk('↺ 重來', () => this.load(this.cur));
+      this.bHint = mk('💡 提示', () => this.hint());
+      this.bSolve = mk('▶ 看解答', () => this.showSolution(), 'primary');
+      $('#puz-controls').replaceWith(bar);
+    }
+
+    load(p) {
+      this.cur = p;
+      const pos = XQ.parseFen(p.fen);
+      this.start = pos;
+      this.board.setPosition(pos.board, pos.side);
+      this.board.locked = false;
+      this.remaining = p.mateIn;
+      this.history = [];
+      this.finished = false;
+      this.usedHint = false;
+      this.listHost.innerHTML = '';
+      this.info.innerHTML = '';
+      this.info.append(
+        el('h3', null, p.name),
+        el('p', null, '輪紅方走棋，請在 ' + p.mateIn + ' 步之內將死黑方。' + (p.note ? p.note : '')),
+        Object.assign(el('div', 'rule-box hint-box'), { textContent: '想一想：' + p.hint })
+      );
+      this.bHint.disabled = false;
+      this.bSolve.disabled = false;
+      this.say('點選紅方棋子，再點目標位置走棋。', '');
+      this.refreshPicker();
+    }
+
+    say(text, kind) {
+      this.status.textContent = text;
+      this.status.className = 'status' + (kind ? ' ' + kind : '');
+    }
+
+    pushMove(board, from, to, note) {
+      const redMove = XQ.colorOf(board[from]) === XQ.RED;
+      const li = el('li', redMove ? 'red' : 'black');
+      li.append(
+        el('span', 'n', redMove ? String(this.history.length / 2 + 1) + '.' : ''),
+        el('span', 'mv', XQ.moveToChinese(board, from, to)),
+        el('span', 'note', note || '')
+      );
+      $('ol', this.listHost) || this.listHost.appendChild(el('ol'));
+      $('ol', this.listHost).appendChild(li);
+      this.history.push({ from, to });
+      li.scrollIntoView({ block: 'nearest' });
+    }
+
+    /** 這一著是否仍然保持連將殺（不限定標準答案，任何能殺的走法都算對） */
+    isWinning(board, move, maxN) {
+      const nb = XQ.applyMove(board, move);
+      if (XQ.legalMoves(nb, XQ.BLACK).length === 0) return 1;
+      if (!XQ.inCheck(nb, XQ.BLACK)) return 0;
+      for (let n = 1; n <= maxN; n++) {
+        let ok = true;
+        for (const d of XQ.legalMoves(nb, XQ.BLACK)) {
+          if (!XQ.findMate(XQ.applyMove(nb, d), XQ.RED, n)) { ok = false; break; }
+        }
+        if (ok) return n + 1;
+      }
+      return 0;
+    }
+
+    async userMove(from, to) {
+      if (this.finished || this.board.locked) return;
+      const board = this.board.board;
+      const win = this.isWinning(board, { from, to }, this.remaining);
+      if (!win) {
+        const nb = XQ.applyMove(board, { from, to });
+        this.say(XQ.inCheck(nb, XQ.BLACK)
+          ? '這一著雖然將軍，但黑方守得住，接不下去了。再想想別的攻法。'
+          : '這一著沒有將軍，黑方有喘息的機會。本題要求連續將軍把對方殺死。', 'bad');
+        this.board.selected = -1;
+        this.board.renderHints();
+        return;
+      }
+
+      this.pushMove(board, from, to);
+      this.board.locked = true;
+      await this.board.move(from, to);
+
+      if (XQ.legalMoves(this.board.board, XQ.BLACK).length === 0) {
+        this.finish();
+        return;
+      }
+      this.remaining = win - 1;
+      this.say('好棋！黑方應將⋯⋯', 'good');
+      await new Promise((r) => setTimeout(r, 420));
+      // 黑方挑抵抗最久的應著
+      const reply = this.bestDefense(this.board.board, this.remaining);
+      this.pushMove(this.board.board, reply.from, reply.to);
+      await this.board.move(reply.from, reply.to);
+      this.board.locked = false;
+      this.say('黑方應將了。還有 ' + this.remaining + ' 步，繼續！', '');
+    }
+
+    bestDefense(board, remaining) {
+      const defenses = XQ.legalMoves(board, XQ.BLACK);
+      let best = defenses[0], bestScore = -1;
+      for (const d of defenses) {
+        const nb = XQ.applyMove(board, d);
+        let dist = 0;
+        for (let n = 1; n <= remaining; n++) if (XQ.findMate(nb, XQ.RED, n)) { dist = n; break; }
+        const score = (dist || 99) * 10 + (board[d.to] ? 1 : 0);
+        if (score > bestScore) { bestScore = score; best = d; }
+      }
+      return best;
+    }
+
+    finish() {
+      this.finished = true;
+      this.board.locked = true;
+      const clean = !this.usedHint && !this.revealed;
+      this.say(clean ? '🎉 絕殺！黑方已經無路可走，完全靠自己解開，漂亮！'
+        : '🎉 絕殺！黑方已經無路可走。', 'good');
+      this.solved.add(this.cur.id);
+      saveSolved(this.solved);
+      this.refreshPicker();
+      this.bHint.disabled = true;
+    }
+
+    hint() {
+      if (this.finished) return;
+      this.usedHint = true;
+      const board = this.board.board;
+      let line = null;
+      for (let n = 1; n <= this.remaining && !line; n++) line = XQ.findMate(board, XQ.RED, n);
+      if (!line) { this.say('這個局面已經殺不出來了，按「重來」再試一次。', 'bad'); return; }
+      const m = line[0].move;
+      this.board.showMovesOf(m.from);
+      const name = XQ.NAMES[XQ.RED][XQ.typeOf(board[m.from])];
+      this.say('提示：關鍵在這個「' + name + '」，它的可走點已標示出來。', '');
+    }
+
+    async showSolution() {
+      this.revealed = true;
+      this.board.locked = true;
+      this.bSolve.disabled = true;
+      this.bHint.disabled = true;
+      const pos = XQ.parseFen(this.cur.fen);
+      this.board.setPosition(pos.board, pos.side);
+      this.listHost.innerHTML = '';
+      this.history = [];
+      this.say('正在演示標準解法⋯⋯', '');
+      for (const s of this.cur.steps) {
+        this.pushMove(this.board.board, s.from, s.to, s.note);
+        await this.board.move(s.from, s.to);
+        await new Promise((r) => setTimeout(r, 560));
+      }
+      this.finished = true;
+      this.say('這就是標準解法。按「重來」可以自己再走一次。', 'good');
+    }
+  }
+
+  /* ── 五、擺棋編輯器 ───────────────────────────────── */
+  function initEditor() {
+    const PALETTE = [
+      ['K', 'red'], ['A', 'red'], ['B', 'red'], ['N', 'red'], ['R', 'red'], ['C', 'red'], ['P', 'red'],
+      ['k', 'black'], ['a', 'black'], ['b', 'black'], ['n', 'black'], ['r', 'black'], ['c', 'black'], ['p', 'black'],
+    ];
+    let brush = 'R';
+    let board = new Array(90).fill('');
+    let side = XQ.RED;
+
+    const host = $('#ed-board');
+    const view = new Board(host, { coords: true, onSquare: (i) => paint(i) });
+    const paletteHost = $('#ed-palette');
+    const msg = $('#ed-msg');
+    const fenInput = $('#ed-fen');
+    const solHost = $('#ed-solution');
+
+    PALETTE.forEach(([code, colour]) => {
+      const b = el('button', colour, XQ.NAMES[colour === 'red' ? 'r' : 'b'][XQ.typeOf(code)]);
+      b.title = (colour === 'red' ? '紅' : '黑') + XQ.NAMES[colour === 'red' ? 'r' : 'b'][XQ.typeOf(code)];
+      b.addEventListener('click', () => { brush = code; syncPalette(); });
+      b.dataset.code = code;
+      paletteHost.appendChild(b);
+    });
+    const eraser = el('button', 'erase', '清除');
+    eraser.dataset.code = '';
+    eraser.addEventListener('click', () => { brush = ''; syncPalette(); });
+    paletteHost.appendChild(eraser);
+
+    function syncPalette() {
+      $$('button', paletteHost).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.code === brush)));
+    }
+
+    function paint(i) {
+      if (!brush) board[i] = '';
+      else {
+        if (brush === 'K' || brush === 'k') {
+          // 將帥只能有一個，且必須在九宮內
+          const s = brush === 'K' ? XQ.RED : XQ.BLACK;
+          if (!XQ.inPalace(s, XQ.rowOf(i), XQ.colOf(i))) {
+            flash('將帥只能放在九宮（三乘三的方框）之內。', 'bad');
+            return;
+          }
+          for (let j = 0; j < 90; j++) if (board[j] === brush) board[j] = '';
+        }
+        board[i] = brush;
+      }
+      render();
+    }
+
+    function render() {
+      view.setPosition(board, side);
+      fenInput.value = XQ.toFen(board, side);
+      validate();
+    }
+
+    function flash(text, kind) {
+      msg.textContent = text;
+      msg.className = 'status' + (kind ? ' ' + kind : '');
+    }
+
+    function problems() {
+      const out = [];
+      if (XQ.findKing(board, XQ.RED) < 0) out.push('缺少紅帥');
+      if (XQ.findKing(board, XQ.BLACK) < 0) out.push('缺少黑將');
+      if (out.length) return out;
+      if (XQ.inCheck(board, XQ.opposite(side)))
+        out.push('未輪走的一方正被將軍，這個局面不可能出現在實戰中');
+      return out;
+    }
+
+    function validate() {
+      const p = problems();
+      if (p.length) flash('⚠ ' + p.join('；'), 'bad');
+      else flash('局面合法。可以按「找出殺法」讓電腦算算看，或複製連結分享給別人解。', '');
+    }
+
+    $('#ed-side').addEventListener('change', (e) => { side = e.target.value; render(); });
+    $('#ed-clear').addEventListener('click', () => { board = new Array(90).fill(''); render(); solHost.innerHTML = ''; });
+    $('#ed-start').addEventListener('click', () => {
+      const p = XQ.parseFen(D.START_FEN);
+      board = p.board; side = p.side; render(); solHost.innerHTML = '';
+    });
+    $('#ed-load').addEventListener('click', () => {
+      try {
+        const p = XQ.parseFen(fenInput.value);
+        if (p.board.filter(Boolean).length === 0) throw new Error('空局面');
+        board = p.board; side = p.side; render(); solHost.innerHTML = '';
+      } catch (err) { flash('讀不懂這串 FEN，請檢查格式。', 'bad'); }
+    });
+    $('#ed-share').addEventListener('click', () => {
+      const url = location.origin + location.pathname + '#fen=' + encodeURIComponent(XQ.toFen(board, side));
+      fenInput.value = url;
+      fenInput.select();
+      let copied = false;
+      try {
+        if (navigator.clipboard) { navigator.clipboard.writeText(url); copied = true; }
+        else copied = document.execCommand('copy');
+      } catch (e) { copied = false; }
+      flash(copied ? '連結已複製，貼給朋友就能直接看到這個局面。'
+        : '連結已顯示在下方欄位，請手動複製。', copied ? '' : 'bad');
+    });
+
+    $('#ed-solve').addEventListener('click', () => {
+      solHost.innerHTML = '';
+      const p = problems();
+      if (p.length) { flash('⚠ ' + p.join('；'), 'bad'); return; }
+      flash('計算中⋯⋯', '');
+      setTimeout(() => {
+        const attacker = side;
+        let found = null, n = 0;
+        for (n = 1; n <= 3; n++) {
+          found = XQ.findMate(board, attacker, n);
+          if (found) break;
+        }
+        if (!found) {
+          flash('在三步之內找不到「連續將軍」的殺法。' +
+            '（本工具專門搜尋連將殺，需要先走閒著的殺法不在搜尋範圍內。）', 'bad');
+          return;
+        }
+        const flat = XQ.flattenLine(found);
+        const steps = flat.map((m) => ({ from: m.from, to: m.to }));
+        flash('找到了：' + n + ' 步連將殺。下面可以一步一步看。', '');
+        const wrap = el('div', 'card');
+        wrap.style.marginTop = '16px';
+        wrap.appendChild(el('h3', null, n + ' 步殺・演示'));
+        const bWrap = el('div'); const lWrap = el('div', 'movelist');
+        const grid = el('div', 'split');
+        grid.append(bWrap, lWrap);
+        wrap.appendChild(grid);
+        solHost.appendChild(wrap);
+        const player = new LinePlayer(bWrap, lWrap, {});
+        wrap.insertBefore(makeControls(player), grid);
+        player.load(XQ.toFen(board, side), steps);
+      }, 30);
+    });
+
+    // 供外部（分享連結）載入局面
+    root.__loadEditorFen = (fen) => {
+      try {
+        const p = XQ.parseFen(fen);
+        board = p.board; side = p.side;
+        $('#ed-side').value = side;
+        render();
+      } catch (e) { /* 忽略無效連結 */ }
+    };
+
+    syncPalette();
+    const p = XQ.parseFen('3ak4/4r4/9/9/2C6/9/9/9/9/3K5 r');
+    board = p.board; side = p.side;
+    render();
+  }
+
+  /* ── 名詞小辭典 ───────────────────────────────────── */
+  function initGlossary() {
+    const host = $('#gloss');
+    if (!host) return;
+    for (const [term, desc] of D.GLOSSARY) {
+      host.append(el('dt', null, term), el('dd', null, desc));
+    }
+  }
+
+  /* ── 分頁切換 ─────────────────────────────────────── */
+  function initTabs() {
+    const tabs = $$('nav.tabs button');
+    const views = $$('section.view');
+    function go(id, push) {
+      tabs.forEach((t) => t.setAttribute('aria-selected', String(t.dataset.view === id)));
+      views.forEach((v) => v.classList.toggle('active', v.id === 'view-' + id));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (push !== false) history.replaceState(null, '', '#' + id);
+    }
+    tabs.forEach((t) => t.addEventListener('click', () => go(t.dataset.view)));
+    $$('[data-goto]').forEach((b) => b.addEventListener('click', () => go(b.dataset.goto)));
+    return go;
+  }
+
+  /* ── 啟動 ─────────────────────────────────────────── */
+  document.addEventListener('DOMContentLoaded', () => {
+    initGlossary();
+    initRules();
+    initNotation();
+    initTactics();
+    const puz = new PuzzleView();
+    puz.load(D.PUZZLES[0]);
+    initEditor();
+    const go = initTabs();
+
+    // 分享連結：#fen=... 直接開啟擺棋頁；#puzzle=p3 直接開某一題
+    const hash = decodeURIComponent(location.hash.replace(/^#/, ''));
+    const m = /^fen=(.+)$/.exec(hash);
+    const mp = /^puzzle=(.+)$/.exec(hash);
+    if (m) { root.__loadEditorFen(m[1]); go('editor'); }
+    else if (mp) {
+      const p = D.PUZZLES.find((x) => x.id === mp[1]);
+      if (p) { puz.load(p); go('puzzle'); }
+    } else if (hash && $('#view-' + hash)) go(hash);
+    else go('home', false);
+  });
+})(window);
+</script>
+</body>
+</html>

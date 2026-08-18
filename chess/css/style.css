@@ -14,12 +14,15 @@
   --board: #eccd93;
   --board-edge: #b8873f;
   --grid: #6a4a1e;
+  --danger-bg: #fdeceb;
   --shadow: 0 1px 2px rgba(60, 45, 20, .12), 0 6px 20px rgba(60, 45, 20, .10);
   --radius: 14px;
 }
 
+/* 深色配色有兩個入口：系統偏好，以及檢視器手動切換時加在 :root 的 data-theme。
+   手動選擇必須勝過系統偏好，所以系統偏好那一條排除了 data-theme="light"。 */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #16181c;
     --bg-alt: #1d2026;
     --panel: #22262d;
@@ -33,8 +36,26 @@
     --accent-soft: #1e332e;
     --board: #d9b87c;
     --board-edge: #7a5722;
+    --danger-bg: #3a2020;
     --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .35);
   }
+}
+:root[data-theme="dark"] {
+    --bg: #16181c;
+    --bg-alt: #1d2026;
+    --panel: #22262d;
+    --ink: #e9e6df;
+    --ink-soft: #a09a90;
+    --line: #343943;
+    --red: #ef6a5c;
+    --red-soft: #ef6a5c;
+    --black-piece: #cdd6e3;
+    --accent: #4dbb9a;
+    --accent-soft: #1e332e;
+    --board: #d9b87c;
+    --board-edge: #7a5722;
+    --danger-bg: #3a2020;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .35);
 }
 
 * { box-sizing: border-box; }
@@ -208,8 +229,7 @@ button.btn.primary:hover:not(:disabled) { filter: brightness(1.08); color: #fff;
   background: var(--bg); border: 1px solid var(--line); min-height: 2.6em;
 }
 .status.good { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
-.status.bad { background: #fdeceb; border-color: var(--red-soft); color: var(--red); }
-@media (prefers-color-scheme: dark) { .status.bad { background: #3a2020; } }
+.status.bad { background: var(--danger-bg); border-color: var(--red-soft); color: var(--red); }
 
 /* ── 清單／卡片 ───────────────────────────────────────── */
 .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 14px; }
@@ -241,8 +261,7 @@ dl.gloss dd { margin: 0; color: var(--ink-soft); }
   border-left: 3px solid var(--accent); background: var(--accent-soft);
   padding: 10px 16px; border-radius: 0 8px 8px 0; margin: 0 0 14px;
 }
-.hint-box { border-left-color: var(--red-soft); background: #fdeceb; }
-@media (prefers-color-scheme: dark) { .hint-box { background: #3a2020; } }
+.hint-box { border-left-color: var(--red-soft); background: var(--danger-bg); }
 
 /* ── 擺棋編輯器 ───────────────────────────────────────── */
 .palette { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
