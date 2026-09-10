@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# 影片下載器的本機設定（含個人下載路徑）
+video-downloader/config.json

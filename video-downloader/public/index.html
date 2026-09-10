@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>影片下載器 · Video Downloader</title>
+    <link rel="icon" href="./favicon.svg" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <!-- 滿版底圖：使用者放進 characters/ 的圖，或內建的大正風原創紋樣 -->
+    <div id="charLayer" class="char-layer" aria-hidden="true"></div>
+    <div class="pattern-layer" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">▚</span>
+        <div>
+          <h1>影片下載器</h1>
+          <p>貼上連結 → 選畫質 → 下載 MP4</p>
+        </div>
+      </div>
+      <div class="tool-status" id="toolStatus"><span class="pill pill-wait">檢查工具中…</span></div>
+    </header>
+
+    <main class="wrap">
+      <!-- ── 步驟 1：連結 ───────────────────────────────── -->
+      <section class="card">
+        <h2><span class="step">1</span> 貼上影片連結</h2>
+        <textarea id="urlInput" rows="3" placeholder="貼上連結，一行一個可一次下載多部&#10;例如：https://www.youtube.com/watch?v=..."></textarea>
+        <div class="platform-row" id="platformRow"></div>
+      </section>
+
+      <!-- ── 步驟 2：畫質 ───────────────────────────────── -->
+      <section class="card">
+        <h2><span class="step">2</span> 選擇畫質（MP4）</h2>
+        <div class="quality-row">
+          <label class="quality"><input type="radio" name="quality" value="1080" checked /><b>1080P</b><span>最高畫質（需要 ffmpeg 合併）</span></label>
+          <label class="quality"><input type="radio" name="quality" value="720" /><b>720P</b><span>檔案較小、下載較快</span></label>
+        </div>
+        <p class="hint">畫質上限 1080P、下限 720P；若原片沒有 720P 以上，會自動取得該片可用的最佳畫質。</p>
+      </section>
+
+      <!-- ── 步驟 3：儲存位置 ───────────────────────────── -->
+      <section class="card">
+        <h2><span class="step">3</span> 儲存位置</h2>
+        <div class="dir-row">
+          <input id="dirInput" type="text" spellcheck="false" placeholder="/Users/你的名字/Downloads" />
+          <button id="saveDirBtn" class="btn btn-primary">儲存位置</button>
+          <button id="browseBtn" class="btn">瀏覽資料夾…</button>
+          <button id="openDirBtn" class="btn">開啟資料夾</button>
+        </div>
+        <div class="recent" id="recentDirs"></div>
+      </section>
+
+      <div class="action-row">
+        <button id="downloadBtn" class="btn btn-go">開始下載</button>
+        <button id="clearBtn" class="btn btn-ghost">清除已完成</button>
+      </div>
+
+      <!-- ── 下載清單 ──────────────────────────────────── -->
+      <section class="card">
+        <h2>下載進度</h2>
+        <div id="jobList" class="job-list"><p class="empty">還沒有下載工作。</p></div>
+      </section>
+
+      <!-- ── 外觀 / 進階 ───────────────────────────────── -->
+      <section class="card collapsible">
+        <details>
+          <summary><h2>外觀與進階設定</h2></summary>
+          <div class="settings-grid">
+            <label class="field">
+              <span>角色底圖</span>
+              <label class="switch"><input type="checkbox" id="charToggle" checked /> 顯示</label>
+            </label>
+            <label class="field">
+              <span>底圖透明度：<b id="opacityValue">50%</b></span>
+              <input type="range" id="opacityRange" min="0" max="100" step="5" value="50" />
+            </label>
+            <label class="field">
+              <span>登入用 Cookie 來源瀏覽器</span>
+              <select id="cookieSelect">
+                <option value="">不使用（預設）</option>
+                <option value="chrome">Chrome</option>
+                <option value="edge">Edge</option>
+                <option value="firefox">Firefox</option>
+                <option value="safari">Safari</option>
+                <option value="brave">Brave</option>
+              </select>
+            </label>
+          </div>
+          <p class="hint">
+            想換成自己的角色圖：把圖片檔（png / jpg / webp / svg）放進
+            <code>video-downloader/public/characters/</code> 資料夾，重新整理即可滿版鋪排。
+            Instagram、Threads 等需登入才看得到的內容，請選擇你已登入該網站的瀏覽器。
+          </p>
+        </details>
+      </section>
+
+      <footer class="foot">
+        請只下載你擁有版權、或已獲授權、或授權條款允許下載的內容，並遵守各平台服務條款。
+      </footer>
+    </main>
+
+    <!-- 資料夾選擇器 -->
+    <div id="browser" class="modal" hidden>
+      <div class="modal-box">
+        <div class="modal-head">
+          <b>選擇資料夾</b>
+          <button id="browserClose" class="btn btn-ghost">✕</button>
+        </div>
+        <div class="modal-path" id="browserPath"></div>
+        <div class="modal-list" id="browserList"></div>
+        <div class="modal-foot">
+          <button id="browserHome" class="btn">家目錄</button>
+          <button id="browserUp" class="btn">上一層</button>
+          <button id="browserPick" class="btn btn-primary">使用這個資料夾</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
