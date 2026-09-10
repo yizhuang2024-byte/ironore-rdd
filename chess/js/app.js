@@ -441,8 +441,349 @@
     }
   }
 
-  /* ── 五、擺棋編輯器 ───────────────────────────────── */
-  function initEditor() {
+  /* ── 五、對弈 ─────────────────────────────────────── */
+  class PlayView {
+    constructor() {
+      this.engine = new root.XQEngine.Engine();
+      this.boardHost = $('#play-board');
+      this.status = $('#play-status');
+      this.listHost = $('#play-moves');
+      this.capHost = $('#play-captured');
+      this.reviewBar = $('#play-review');
+      this.opponent = 'normal';      // easy / normal / hard / human
+      this.humanSide = XQ.RED;
+      this.buildOptions();
+      this.buildControls();
+      this.newGame();
+    }
+
+    /* ── 選項 ─────────────────────────────────────── */
+    buildOptions() {
+      const wrap = $('#play-options');
+      const group = (label, items, get, set) => {
+        const box = el('div', 'optgroup');
+        box.appendChild(el('span', 'optlabel', label));
+        const row = el('div', 'optrow');
+        for (const [value, text] of items) {
+          const b = el('button', 'chip', text);
+          b.addEventListener('click', () => {
+            set(value);
+            sync();
+            this.newGame();
+          });
+          b.dataset.value = value;
+          row.appendChild(b);
+        }
+        box.appendChild(row);
+        wrap.appendChild(box);
+        const sync = () => $$('button', row).forEach((b) =>
+          b.setAttribute('aria-pressed', String(b.dataset.value === String(get()))));
+        sync();
+        return sync;
+      };
+
+      const L = root.XQEngine.LEVELS;
+      this.syncOpponent = group('對手', [
+        ['easy', '電腦・' + L.easy.name],
+        ['normal', '電腦・' + L.normal.name],
+        ['hard', '電腦・' + L.hard.name],
+        ['human', '兩人對下'],
+      ], () => this.opponent, (v) => { this.opponent = v; });
+
+      this.syncSide = group('你執', [
+        [XQ.RED, '紅方（先走）'],
+        [XQ.BLACK, '黑方（後走）'],
+      ], () => this.humanSide, (v) => { this.humanSide = v; });
+    }
+
+    buildControls() {
+      const bar = el('div', 'controls');
+      const mk = (label, fn, cls) => {
+        const b = el('button', 'btn' + (cls ? ' ' + cls : ''), label);
+        b.addEventListener('click', fn);
+        bar.appendChild(b);
+        return b;
+      };
+      this.bNew = mk('↺ 新局', () => this.newGame(), 'primary');
+      this.bUndo = mk('⟲ 悔棋', () => this.undo());
+      this.bResign = mk('🏳 認輸', () => this.resign());
+      $('#play-controls').replaceWith(bar);
+
+      this.bBackToGame = el('button', 'btn', '回到對局');
+      this.bBackToGame.addEventListener('click', () => this.exitReview());
+      this.reviewBar.appendChild(this.bBackToGame);
+      this.reviewBar.hidden = true;
+    }
+
+    get vsComputer() { return this.opponent !== 'human'; }
+
+    setOptionsEnabled(on) {
+      $$('#play-options button').forEach((b) => { b.disabled = !on; });
+      if (this.bNew) this.bNew.disabled = !on;
+    }
+
+    /* ── 開新局 ───────────────────────────────────── */
+    /** fen 可省略；給定時就從那個局面開始下（例如從「自己擺棋」帶過來的局面） */
+    newGame(fen) {
+      if (fen !== undefined) this.startFen = fen || D.START_FEN;
+      if (!this.startFen) this.startFen = D.START_FEN;
+      const start = XQ.parseFen(this.startFen);
+      this.startBoard = start.board.slice();
+      // 執黑時把棋盤轉過來，讓自己的棋子在下方
+      const flipped = this.vsComputer && this.humanSide === XQ.BLACK;
+      this.board = new Board(this.boardHost, {
+        interactive: true,
+        flipped,
+        onMove: (f, t) => this.humanMove(f, t),
+      });
+      this.board.setPosition(start.board, start.side);
+
+      // 每開一局就換一個世代編號。電腦的搜尋是非同步啟動的，
+      // 使用者可能在它思考時就按了新局或換了選項，這時舊的結果必須丟掉，
+      // 否則會把算好的著法套到新棋盤上。
+      this.gen = (this.gen || 0) + 1;
+      this.frames = [start.board.slice()];      // 每一步之後的局面，供回顧
+      this.moves = [];                          // {from,to,text,captured}
+      this.side = start.side;
+      this.over = false;
+      this.reviewAt = -1;
+      this.thinking = false;
+      this.seen = new Map();
+      this.countSeen();
+      this.listHost.innerHTML = '';
+      this.capHost.innerHTML = '';
+      this.reviewBar.hidden = true;
+      this.refresh();
+      this.maybeEngineMove();
+    }
+
+    countSeen() {
+      const key = XQ.toFen(this.board.board, this.side);
+      this.seen.set(key, (this.seen.get(key) || 0) + 1);
+      return this.seen.get(key);
+    }
+
+    /* ── 狀態顯示 ─────────────────────────────────── */
+    say(text, kind) {
+      this.status.textContent = text;
+      this.status.className = 'status' + (kind ? ' ' + kind : '');
+    }
+
+    sideName(s) { return s === XQ.RED ? '紅方' : '黑方'; }
+
+    refresh() {
+      const human = !this.vsComputer || this.side === this.humanSide;
+      this.setOptionsEnabled(!this.thinking);
+      this.board.locked = this.over || this.thinking || this.reviewAt >= 0 || !human;
+      this.bUndo.disabled = this.over || this.thinking || this.reviewAt >= 0 ||
+        this.moves.length === 0;
+      this.bResign.disabled = this.over || this.reviewAt >= 0;
+      this.renderCaptured();
+      if (this.over || this.reviewAt >= 0) return;
+      if (this.thinking) { this.say('電腦思考中⋯⋯', ''); return; }
+      const checked = XQ.inCheck(this.board.board, this.side);
+      const who = this.sideName(this.side);
+      if (this.vsComputer) {
+        this.say((checked ? '將軍！' : '') +
+          (human ? '輪你走棋（' + who + '）。點自己的棋子再點目標位置。'
+                 : '輪電腦走棋（' + who + '）。'), checked ? 'bad' : '');
+      } else {
+        this.say((checked ? '將軍！' : '') + '輪' + who + '走棋。', checked ? 'bad' : '');
+      }
+    }
+
+    renderCaptured() {
+      const start = this.startBoard;
+      const now = this.board.board;
+      const count = (b) => {
+        const m = {};
+        for (const p of b) if (p) m[p] = (m[p] || 0) + 1;
+        return m;
+      };
+      const a = count(start), c = count(now);
+      const lost = { r: [], b: [] };
+      for (const p in a) {
+        for (let i = 0; i < a[p] - (c[p] || 0); i++) {
+          lost[XQ.colorOf(p)].push(XQ.NAMES[XQ.colorOf(p)][XQ.typeOf(p)]);
+        }
+      }
+      this.capHost.innerHTML = '';
+      for (const s of [XQ.BLACK, XQ.RED]) {
+        if (!lost[s].length) continue;
+        const row = el('div', 'caprow');
+        row.appendChild(el('span', 'caplabel', '被吃的' + this.sideName(s) + '子'));
+        for (const name of lost[s]) {
+          row.appendChild(el('span', 'capchip ' + (s === XQ.RED ? 'red' : 'black'), name));
+        }
+        this.capHost.appendChild(row);
+      }
+    }
+
+    /* ── 走一步 ───────────────────────────────────── */
+    /**
+     * 走一步並更新棋譜。gen 是開局世代：走子中間有一段等待動畫的時間，
+     * 使用者可能剛好在這時開了新局，因此動畫前後都要確認世代還是同一個，
+     * 否則就會把這一手記到新的一局上。
+     */
+    async applyMove(from, to, gen) {
+      if (this.gen !== gen) return true;
+      const bd = this.board;                  // 捕捉當下的棋盤，避免中途被換掉
+      const board = bd.board;
+      const text = XQ.moveToChinese(board, from, to);
+      const captured = board[to];
+      this.moves.push({ from, to, text, captured });
+      this.addMoveRow(this.moves.length - 1);
+      await bd.move(from, to);
+      if (this.gen !== gen) return true;      // 動畫期間開了新局，這一手作廢
+      this.frames.push(bd.board.slice());
+      this.side = XQ.opposite(this.side);
+      const repeats = this.countSeen();
+      return this.checkEnd(repeats);
+    }
+
+    addMoveRow(i) {
+      const m = this.moves[i];
+      const redMove = XQ.colorOf(this.frames[i][m.from]) === XQ.RED;
+      let ol = $('ol', this.listHost);
+      if (!ol) { ol = el('ol'); this.listHost.appendChild(ol); }
+      const li = el('li', redMove ? 'red' : 'black');
+      li.append(
+        el('span', 'n', redMove ? String(Math.floor(i / 2) + 1) + '.' : ''),
+        el('span', 'mv', m.text),
+        el('span', 'note', m.captured
+          ? '吃' + XQ.NAMES[XQ.colorOf(m.captured)][XQ.typeOf(m.captured)] : '')
+      );
+      li.addEventListener('click', () => this.review(i + 1));
+      ol.appendChild(li);
+      li.scrollIntoView({ block: 'nearest' });
+    }
+
+    /** 回傳 true 表示棋局已結束 */
+    checkEnd(repeats) {
+      if (XQ.legalMoves(this.board.board, this.side).length === 0) {
+        const winner = this.sideName(XQ.opposite(this.side));
+        const how = XQ.inCheck(this.board.board, this.side) ? '被將死' : '無著可走（困斃）';
+        this.finish(winner + '勝——' + this.sideName(this.side) + how + '。');
+        return true;
+      }
+      if (repeats >= 3) {
+        this.finish('同一局面出現三次，判和。');
+        return true;
+      }
+      return false;
+    }
+
+    finish(text) {
+      this.over = true;
+      this.board.locked = true;
+      const mine = this.vsComputer &&
+        text.startsWith(this.sideName(this.humanSide)) && text.includes('勝');
+      this.say((mine ? '🎉 ' : '') + text + '　按「新局」再來一盤，或點左邊的著法回顧棋譜。',
+        mine ? 'good' : '');
+      this.refresh();
+    }
+
+    async humanMove(from, to) {
+      if (this.over || this.thinking || this.reviewAt >= 0) return;
+      if (this.vsComputer && this.side !== this.humanSide) return;
+      const ended = await this.applyMove(from, to, this.gen);
+      this.refresh();
+      if (!ended) this.maybeEngineMove();
+    }
+
+    /* ── 電腦走棋 ─────────────────────────────────── */
+    maybeEngineMove() {
+      if (this.over || !this.vsComputer || this.side === this.humanSide) return;
+      this.thinking = true;
+      this.refresh();
+      const gen = this.gen;
+      // 先讓瀏覽器把「思考中」畫出來，再開始算（搜尋是同步的，會擋住畫面）
+      setTimeout(async () => {
+        if (this.gen !== gen) return;          // 已經開了新局
+        const cfg = Object.assign({}, root.XQEngine.LEVELS[this.opponent], {
+          avoid: new Set(this.seen.keys()),
+        });
+        const res = this.engine.think(this.board.board, this.side, cfg);
+        if (this.gen !== gen) return;          // 思考期間開了新局，結果作廢
+        this.thinking = false;
+        if (this.over) return;
+        if (!res) { this.refresh(); return; }
+        const ended = await this.applyMove(res.move.from, res.move.to, gen);
+        if (this.gen !== gen) return;
+        this.refresh();
+        if (!ended && this.vsComputer && this.side !== this.humanSide) {
+          this.maybeEngineMove();              // 兩台電腦互下的情況（理論上不會發生）
+        }
+      }, 40);
+    }
+
+    /* ── 悔棋 ─────────────────────────────────────── */
+    undo() {
+      if (!this.moves.length || this.thinking) return;
+      // 對電腦時退兩手，讓回合回到自己
+      const back = this.vsComputer && this.moves.length >= 2 ? 2 : 1;
+      for (let i = 0; i < back; i++) {
+        const m = this.moves.pop();
+        if (!m) break;
+        this.frames.pop();
+        const key = XQ.toFen(this.frames[this.frames.length - 1],
+          XQ.opposite(this.side));
+        const n = (this.seen.get(key) || 1) - 1;
+        if (n <= 0) this.seen.delete(key); else this.seen.set(key, n);
+        this.side = XQ.opposite(this.side);
+        const ol = $('ol', this.listHost);
+        if (ol && ol.lastChild) ol.removeChild(ol.lastChild);
+      }
+      this.over = false;
+      this.board.setPosition(this.frames[this.frames.length - 1], this.side);
+      const last = this.moves[this.moves.length - 1];
+      if (last) this.board.markMove(last.from, last.to);
+      this.refresh();
+    }
+
+    resign() {
+      if (this.over) return;
+      const loser = this.vsComputer ? this.humanSide : this.side;
+      this.finish(this.sideName(XQ.opposite(loser)) + '勝——' +
+        this.sideName(loser) + '認輸。');
+    }
+
+    /* ── 回顧棋譜 ─────────────────────────────────── */
+    review(n) {
+      if (n < 0 || n >= this.frames.length) return;
+      this.reviewAt = n;
+      const first = XQ.parseFen(this.startFen).side;
+      const side = n % 2 === 0 ? first : XQ.opposite(first);
+      this.board.setPosition(this.frames[n], side);
+      if (n > 0) this.board.markMove(this.moves[n - 1].from, this.moves[n - 1].to);
+      this.board.locked = true;
+      $$('li', this.listHost).forEach((li, i) => li.classList.toggle('on', i === n - 1));
+      this.reviewBar.hidden = false;
+      this.say('回顧第 ' + n + ' 手' + (this.moves[n - 1] ? '（' + this.moves[n - 1].text + '）' : '') +
+        '。這是回顧模式，按「回到對局」繼續下棋。', '');
+      this.bUndo.disabled = true;
+      this.bResign.disabled = true;
+    }
+
+    /** 從指定局面開一局（供「自己擺棋」與分享連結使用） */
+    startFrom(fen) {
+      this.newGame(fen);
+    }
+
+    exitReview() {
+      this.reviewAt = -1;
+      this.reviewBar.hidden = true;
+      $$('li', this.listHost).forEach((li) => li.classList.remove('on'));
+      this.board.setPosition(this.frames[this.frames.length - 1], this.side);
+      const last = this.moves[this.moves.length - 1];
+      if (last) this.board.markMove(last.from, last.to);
+      this.refresh();
+      if (this.over) this.say('棋局已結束，按「新局」再來一盤。', '');
+    }
+  }
+
+  /* ── 六、擺棋編輯器 ───────────────────────────────── */
+  function initEditor(onPlay) {
     const PALETTE = [
       ['K', 'red'], ['A', 'red'], ['B', 'red'], ['N', 'red'], ['R', 'red'], ['C', 'red'], ['P', 'red'],
       ['k', 'black'], ['a', 'black'], ['b', 'black'], ['n', 'black'], ['r', 'black'], ['c', 'black'], ['p', 'black'],
@@ -544,6 +885,12 @@
         : '連結已顯示在下方欄位，請手動複製。', copied ? '' : 'bad');
     });
 
+    $('#ed-play').addEventListener('click', () => {
+      const p = problems();
+      if (p.length) { flash('⚠ ' + p.join('；'), 'bad'); return; }
+      onPlay(XQ.toFen(board, side));
+    });
+
     $('#ed-solve').addEventListener('click', () => {
       solHost.innerHTML = '';
       const p = problems();
@@ -626,14 +973,18 @@
     initTactics();
     const puz = new PuzzleView();
     puz.load(D.PUZZLES[0]);
-    initEditor();
-    const go = initTabs();
+    const play = new PlayView();
+    let go = null;
+    initEditor((fen) => { play.startFrom(fen); if (go) go('play'); });
+    go = initTabs();
 
     // 分享連結：#fen=... 直接開啟擺棋頁；#puzzle=p3 直接開某一題
     const hash = decodeURIComponent(location.hash.replace(/^#/, ''));
     const m = /^fen=(.+)$/.exec(hash);
     const mp = /^puzzle=(.+)$/.exec(hash);
-    if (m) { root.__loadEditorFen(m[1]); go('editor'); }
+    const mg = /^play=(.+)$/.exec(hash);
+    if (mg) { play.startFrom(mg[1]); go('play'); }
+    else if (m) { root.__loadEditorFen(m[1]); go('editor'); }
     else if (mp) {
       const p = D.PUZZLES.find((x) => x.id === mp[1]);
       if (p) { puz.load(p); go('puzzle'); }

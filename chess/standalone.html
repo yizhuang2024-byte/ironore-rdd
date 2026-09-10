@@ -69,6 +69,10 @@
 
 * { box-sizing: border-box; }
 
+/* hidden 屬性必須贏過帶 display 的類別選擇器（例如 .controls 的 flex），
+   否則 el.hidden = true 不會真的隱藏元素 */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   background: var(--bg);
@@ -296,6 +300,38 @@ footer.site-foot {
   color: var(--ink-soft); font-size: .87rem;
 }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* ── 對弈：選項與被吃的子 ─────────────────────────────── */
+.options { display: flex; flex-wrap: wrap; gap: 22px; margin: 0 0 22px; }
+.optgroup { display: flex; flex-direction: column; gap: 6px; }
+.optlabel { font-size: .8rem; color: var(--ink-soft); letter-spacing: .06em; }
+.optrow { display: flex; flex-wrap: wrap; gap: 6px; }
+button.chip {
+  font: inherit; font-size: .9rem; cursor: pointer;
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+  padding: 6px 14px; border-radius: 999px;
+  transition: background .15s, border-color .15s, color .15s;
+}
+/* 已選取的 chip 不套用 hover 的文字色，否則會變成綠字配綠底而看不見 */
+button.chip:hover:not(:disabled):not([aria-pressed="true"]) {
+  border-color: var(--accent); color: var(--accent);
+}
+button.chip:disabled { opacity: .5; cursor: default; }
+button.chip[aria-pressed="true"] {
+  background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600;
+}
+
+.captured { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; min-height: 1px; }
+.caprow { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.caplabel { font-size: .8rem; color: var(--ink-soft); margin-right: 4px; }
+.capchip {
+  font-family: "Noto Serif TC", "PingFang TC", serif; font-weight: 700; font-size: .88rem;
+  width: 1.9em; height: 1.9em; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--bg); border: 1px solid var(--line);
+}
+.capchip.red { color: var(--red); }
+.capchip.black { color: var(--ink); }
 </style>
 </head>
 <body>
@@ -309,6 +345,7 @@ footer.site-foot {
       <button data-view="notation" role="tab" aria-selected="false">看懂棋譜</button>
       <button data-view="tactics" role="tab" aria-selected="false">殺法戰術</button>
       <button data-view="puzzle" role="tab" aria-selected="false">殘局挑戰</button>
+      <button data-view="play" role="tab" aria-selected="false">對弈</button>
       <button data-view="editor" role="tab" aria-selected="false">自己擺棋</button>
     </nav>
   </div>
@@ -342,8 +379,12 @@ footer.site-foot {
         <div class="t"><span>④ 殘局挑戰</span></div>
         <div class="d">九道由淺入深的排局。你在棋盤上真的走子，電腦會判斷這一著能不能殺，並且替黑方應將。</div>
       </button>
+      <button class="pick" data-goto="play">
+        <div class="t"><span>⑤ 對弈</span></div>
+        <div class="d">在完整的棋盤上真的下一盤。可以跟三種強度的電腦對手下，也可以兩個人輪流用同一台裝置對弈。</div>
+      </button>
       <button class="pick" data-goto="editor">
-        <div class="t"><span>⑤ 自己擺棋</span></div>
+        <div class="t"><span>⑥ 自己擺棋</span></div>
         <div class="d">擺出你想考別人的局面，讓電腦驗算有沒有殺法，再把連結分享出去給朋友破解。</div>
       </button>
     </div>
@@ -455,12 +496,42 @@ footer.site-foot {
     </div>
   </section>
 
+  <!-- ── 對弈 ─────────────────────────────────────── -->
+  <section class="view" id="view-play">
+    <h1>對弈</h1>
+    <p class="lead">
+      從開局擺好的完整棋盤下一盤棋。點自己的棋子，棋盤會標出所有合法落點，再點目標位置就走子。
+      電腦對手會即時計算應手；想反悔可以按「悔棋」，想看剛才怎麼走到這裡，點右邊任何一手就能回顧。
+    </p>
+
+    <div id="play-options" class="options"></div>
+
+    <div class="split">
+      <div>
+        <div id="play-board"></div>
+        <div id="play-controls"></div>
+        <div class="status" id="play-status"></div>
+        <div id="play-captured" class="captured"></div>
+      </div>
+      <div>
+        <h3>棋譜</h3>
+        <div class="controls" id="play-review"></div>
+        <div class="movelist" id="play-moves"></div>
+        <p class="lead" style="font-size:.86rem;margin-top:12px">
+          電腦的強度差別在於它往前推算幾步，以及對局面價值的判斷有多精準：
+          初級只看兩步且判斷會有偏差，高級會推算到六步且完全照最佳判斷走。
+        </p>
+      </div>
+    </div>
+  </section>
+
   <!-- ── 擺棋 ─────────────────────────────────────── -->
   <section class="view" id="view-editor">
     <h1>自己擺棋</h1>
     <p class="lead">
       選一個棋子，再點棋盤就能把它放上去；選「清除」則可以拿掉棋子。
-      擺好之後可以讓電腦驗算有沒有連將殺，或是把連結複製給朋友，讓他們來破解你出的題目。
+      擺好之後可以讓電腦驗算有沒有連將殺、直接從這個局面跟電腦對弈，
+      或是把連結複製給朋友，讓他們來破解你出的題目。
     </p>
     <div class="split">
       <div>
@@ -486,6 +557,7 @@ footer.site-foot {
 
         <div class="controls">
           <button class="btn primary" id="ed-solve">🔍 找出殺法</button>
+          <button class="btn" id="ed-play">▶ 從這個局面開弈</button>
           <button class="btn" id="ed-share">🔗 複製分享連結</button>
           <button class="btn" id="ed-load">載入下方 FEN</button>
         </div>
@@ -598,6 +670,11 @@ footer.site-foot {
   ];
   const BISHOP_STEPS = [[-2, -2], [-2, 2], [2, -2], [2, 2]];
   const ADVISOR_STEPS = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+  // 反查馬的攻擊來源：[馬相對目標的 dr, dc, 馬腿相對目標的 dr, dc]
+  const KNIGHT_ATTACK = [
+    [-2, -1, -1, -1], [-2, 1, -1, 1], [2, -1, 1, -1], [2, 1, 1, 1],
+    [-1, -2, -1, -1], [-1, 2, -1, 1], [1, -2, 1, -1], [1, 2, 1, 1],
+  ];
 
   function genPieceMoves(board, from, out) {
     const p = board[from];
@@ -716,13 +793,95 @@ footer.site-foot {
     return true;
   }
 
+  /**
+   * 某一格是否被 by 方的棋子攻擊（不含白臉將，那是另一條規則）。
+   *
+   * 這裡刻意不產生對手的完整走法表，而是從目標格「反查」各種棋子可能的
+   * 攻擊來源，成本從一次完整走法產生降到幾十次陣列讀取。
+   * 對弈 AI 的搜尋幾乎每個節點都要判斷將軍，這個差別很關鍵。
+   *
+   * 「攻擊」的定義是「這一格若有 by 方的敵子，會不會被吃掉」。
+   * 在空格上，這與「有沒有走法走到該格」並不等價：炮隔著砲架控制的空格
+   * 不會產生走法，而炮的閒著目標也不算攻擊。將帥永遠是棋子，
+   * 所以用於王安全判斷時兩者完全一致（已用亂數局面逐格比對驗證）。
+   */
+  function isAttacked(board, sq, by) {
+    const r = rowOf(sq), c = colOf(sq);
+
+    // 車、炮、以及貼身的將帥：沿四個方向往外掃
+    for (const [dr, dc] of ROOK_DIRS) {
+      let tr = r + dr, tc = c + dc, dist = 1, first = '';
+      while (onBoard(tr, tc)) {
+        first = board[at(tr, tc)];
+        if (first) break;
+        tr += dr; tc += dc; dist++;
+      }
+      if (!first) continue;
+      if (colorOf(first) === by) {
+        const t = typeOf(first);
+        if (t === 'R') return true;
+        // 將帥只能在九宮內走一格
+        if (t === 'K' && dist === 1 && inPalace(by, r, c)) return true;
+      }
+      // 越過第一個子（砲架）之後的第一個子若是炮，就打得到
+      let sr = tr + dr, sc = tc + dc, second = '';
+      while (onBoard(sr, sc)) {
+        second = board[at(sr, sc)];
+        if (second) break;
+        sr += dr; sc += dc;
+      }
+      if (second && colorOf(second) === by && typeOf(second) === 'C') return true;
+    }
+
+    // 馬：從八個可能的來源反查，馬腿是目標與馬之間的那個斜角
+    const N_PIECE = by === RED ? 'N' : 'n';
+    for (const [a, b, lr, lc] of KNIGHT_ATTACK) {
+      const tr = r + a, tc = c + b;
+      if (!onBoard(tr, tc)) continue;
+      if (board[at(tr, tc)] !== N_PIECE) continue;
+      if (board[at(r + lr, c + lc)]) continue;   // 蹩馬腿
+      return true;
+    }
+
+    // 兵卒：紅兵往上走，黑卒往下走；過河後才能橫吃
+    const P_PIECE = by === RED ? 'P' : 'p';
+    const back = by === RED ? r + 1 : r - 1;
+    if (onBoard(back, c) && board[at(back, c)] === P_PIECE) return true;
+    for (const dc of [-1, 1]) {
+      if (!onBoard(r, c + dc)) continue;
+      // 橫吃的兵與目標同一列，因此用目標的列判斷它是否已過河
+      if (board[at(r, c + dc)] === P_PIECE && !ownHalf(by, r)) return true;
+    }
+
+    // 士：九宮內斜走一格
+    const A_PIECE = by === RED ? 'A' : 'a';
+    if (inPalace(by, r, c)) {
+      for (const [dr, dc] of ADVISOR_STEPS) {
+        const tr = r + dr, tc = c + dc;
+        if (onBoard(tr, tc) && board[at(tr, tc)] === A_PIECE) return true;
+      }
+    }
+
+    // 象：田字，且不過河
+    const B_PIECE = by === RED ? 'B' : 'b';
+    if (ownHalf(by, r)) {
+      for (const [dr, dc] of BISHOP_STEPS) {
+        const tr = r + dr, tc = c + dc;
+        if (!onBoard(tr, tc)) continue;
+        if (board[at(tr, tc)] !== B_PIECE) continue;
+        if (board[at(r + dr / 2, c + dc / 2)]) continue;  // 塞象眼
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   function inCheck(board, side) {
     const king = findKing(board, side);
     if (king < 0) return true;                 // 將帥被吃視為已負
     if (kingsFacing(board)) return true;
-    const foes = genMoves(board, opposite(side));
-    for (const m of foes) if (m.to === king) return true;
-    return false;
+    return isAttacked(board, king, opposite(side));
   }
 
   function applyMove(board, move) {
@@ -911,7 +1070,7 @@ footer.site-foot {
     colorOf, typeOf, opposite, inPalace, ownHalf,
     parseFen, toFen, cloneBoard,
     genMoves, legalMoves, movesFrom, isLegalMove, applyMove,
-    findKing, kingsFacing, inCheck, isMated, gameOver,
+    findKing, kingsFacing, isAttacked, inCheck, isMated, gameOver,
     moveToChinese, NAMES,
     checkingMoves, findMate, flattenLine, mateDistance, allMatingMoves,
   };
@@ -929,6 +1088,7 @@ footer.site-foot {
   const XQ = root.XQ;
   const { W, H, at, rowOf, colOf } = XQ;
 
+  const CN_DIGITS = ['一', '二', '三', '四', '五', '六', '七', '八', '九'];
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const U = 100;                      // SVG 每格單位
   const GW = (W - 1) * U, GH = (H - 1) * U;
@@ -1044,23 +1204,28 @@ footer.site-foot {
     }
 
     _coordBar(which) {
+      const flipped = !!this.opts.flipped;
+      // 未翻轉時上方是黑方；翻轉後（黑方在下）兩條座標列互換
+      const blackSide = (which === 'top') !== flipped;
       const bar = el('div', 'xq-coords xq-coords-' + which);
-      const labels = which === 'top'
-        ? ['1','2','3','4','5','6','7','8','9']       // 黑方路數，由黑方右手邊起算
-        : ['九','八','七','六','五','四','三','二','一']; // 紅方路數，由紅方右手邊起算
-      labels.forEach((s, i) => {
+      for (let i = 0; i < W; i++) {
+        const col = flipped ? W - 1 - i : i;
         const n = el('span', null);
-        n.textContent = s;
+        // 黑方由黑方右手邊起算 1~9；紅方由紅方右手邊起算 一~九（紅方路數 = 9 - col）
+        n.textContent = blackSide ? String(col + 1) : CN_DIGITS[W - 1 - col];
         n.style.left = (i / (W - 1)) * 100 + '%';     // 與棋子用同一套定位
         bar.appendChild(n);
-      });
+      }
       return bar;
     }
 
-    /* 座標換算 */
+    /* 座標換算（翻轉時等於把棋盤旋轉 180 度） */
     _place(node, index) {
-      node.style.left = (colOf(index) / (W - 1)) * 100 + '%';
-      node.style.top = (rowOf(index) / (H - 1)) * 100 + '%';
+      const f = !!this.opts.flipped;
+      const col = f ? W - 1 - colOf(index) : colOf(index);
+      const row = f ? H - 1 - rowOf(index) : rowOf(index);
+      node.style.left = (col / (W - 1)) * 100 + '%';
+      node.style.top = (row / (H - 1)) * 100 + '%';
     }
 
     /* ── 設定局面（不做動畫） ─────────────────────────── */
@@ -1183,13 +1348,14 @@ footer.site-foot {
     /* ── 點擊處理 ─────────────────────────────────────── */
     _indexFromEvent(e) {
       const r = this.inner.getBoundingClientRect();
-      const c = Math.round(((e.clientX - r.left) / r.width) * (W - 1));
-      const row = Math.round(((e.clientY - r.top) / r.height) * (H - 1));
+      let c = Math.round(((e.clientX - r.left) / r.width) * (W - 1));
+      let row = Math.round(((e.clientY - r.top) / r.height) * (H - 1));
       if (c < 0 || c >= W || row < 0 || row >= H) return -1;
       // 點得太偏就忽略，避免誤觸
       const dx = Math.abs((e.clientX - r.left) / r.width * (W - 1) - c);
       const dy = Math.abs((e.clientY - r.top) / r.height * (H - 1) - row);
       if (dx > 0.48 || dy > 0.48) return -1;
+      if (this.opts.flipped) { c = W - 1 - c; row = H - 1 - row; }
       return at(row, c);
     }
 
@@ -1219,6 +1385,367 @@ footer.site-foot {
   }
 
   root.XQBoard = { Board, buildGrid };
+})(window);
+</script>
+<script>
+/*
+ * engine.js — 對弈用的電腦棋手
+ *
+ * 作法是標準的 alpha-beta 搜尋加上迭代加深：
+ *   ・局面評估 = 子力價值 + 位置價值表（PST）
+ *   ・搜尋時對同一個棋盤陣列做「走 / 還原」，不複製棋盤
+ *   ・走法排序把吃子（依 MVV-LVA）排前面，剪枝效率差很多
+ *   ・葉節點再做一層只算吃子的靜態搜尋，避免「地平線效應」
+ *     （剛好在交換到一半的時候停下來，把局面評估得離譜）
+ *
+ * 規則判斷一律呼叫 rules.js，這裡不重複實作任何規則，
+ * 以免兩邊對規則的理解出現分歧。
+ */
+(function (root) {
+  'use strict';
+  const XQ = root.XQ;
+  const { W, H, at, rowOf, colOf, RED, BLACK, opposite, colorOf, typeOf } = XQ;
+
+  const MATE = 100000;          // 將死的分數
+  const INF = 1e9;
+
+  /* ── 子力價值 ─────────────────────────────────────────── */
+  const VALUE = { K: 60000, R: 900, C: 450, N: 400, A: 200, B: 200, P: 100 };
+
+  /* ── 位置價值表 ───────────────────────────────────────────
+   * 以紅方視角建表（row 0 是對方底線），黑方用上下鏡射。
+   */
+  function makeTables() {
+    const blank = () => new Int32Array(90);
+    const T = { K: blank(), A: blank(), B: blank(), N: blank(), R: blank(), C: blank(), P: blank() };
+
+    for (let r = 0; r < H; r++) {
+      for (let c = 0; c < W; c++) {
+        const i = at(r, c);
+        const central = c >= 3 && c <= 5 ? 1 : (c >= 2 && c <= 6 ? 0.5 : 0);
+        const edge = (c === 0 || c === W - 1) ? 1 : 0;
+
+        // 兵：過河才有價值，越接近對方九宮越強，但沉到底線反而用處變小
+        const pawnRow = [60, 70, 55, 35, 20, 5, 0, 0, 0, 0][r];
+        T.P[i] = pawnRow + (r <= 4 ? central * 10 : 0);
+
+        // 馬：怕邊怕角，過河到中路最有力
+        T.N[i] = -12 * edge + (r >= 2 && r <= 6 ? 10 + central * 6 : 0) - (r === 9 ? 6 : 0);
+
+        // 炮：中路（當頭炮）與沉底線都有價值，邊路較差
+        T.C[i] = central * 8 - 5 * edge + (r === 0 ? 6 : 0) + (r >= 5 && r <= 7 ? 4 : 0);
+
+        // 車：越過河越活躍，對方的底二路特別可怕
+        T.R[i] = (9 - r) * 3 + central * 6 + (r <= 1 ? 12 : 0);
+
+        // 仕相：待在標準防守位置，避免電腦沒事亂晃
+        T.A[i] = 0;
+        T.B[i] = 0;
+
+        // 帥：留在底線最安全，往前走要扣分
+        T.K[i] = r === 9 ? 8 : (r === 8 ? -8 : -25);
+      }
+    }
+    // 仕相的標準位置
+    for (const [r, c, v] of [[9, 3, 6], [9, 5, 6], [8, 4, 10]]) T.A[at(r, c)] = v;
+    for (const [r, c, v] of [[9, 2, 6], [9, 6, 6], [7, 0, 4], [7, 4, 10], [7, 8, 4], [5, 2, 3], [5, 6, 3]])
+      T.B[at(r, c)] = v;
+    return T;
+  }
+  const PST_RED = makeTables();
+  // 黑方鏡射：黑方的 (r,c) 等於紅方的 (9-r,c)
+  const PST_BLACK = (() => {
+    const out = {};
+    for (const k in PST_RED) {
+      const t = new Int32Array(90);
+      for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) t[at(r, c)] = PST_RED[k][at(H - 1 - r, c)];
+      out[k] = t;
+    }
+    return out;
+  })();
+
+  /* ── 查表 ──────────────────────────────────────────────────
+   * 搜尋的熱路徑上每一步都要算分。typeOf()／colorOf() 會做
+   * toUpperCase() 這類字串運算，在每秒數十萬次的呼叫下代價很高，
+   * 因此先把「棋子字元 → 各格的帶號分數」整張表算好。
+   */
+  const CONTRIB = {};      // 字元 → Int32Array(90)，已含正負號（紅正黑負）
+  const CHAR_VALUE = {};   // 字元 → 子力價值（排序用，不帶號）
+  for (const t of ['K', 'A', 'B', 'N', 'R', 'C', 'P']) {
+    const red = new Int32Array(90), black = new Int32Array(90);
+    for (let i = 0; i < 90; i++) {
+      red[i] = VALUE[t] + PST_RED[t][i];
+      black[i] = -(VALUE[t] + PST_BLACK[t][i]);
+    }
+    CONTRIB[t] = red;
+    CONTRIB[t.toLowerCase()] = black;
+    CHAR_VALUE[t] = VALUE[t];
+    CHAR_VALUE[t.toLowerCase()] = VALUE[t];
+  }
+
+  /* ── 局面評估（回傳紅方視角的分數） ───────────────────── */
+  function evaluate(board, table) {
+    const C = table || CONTRIB;
+    let score = 0;
+    for (let i = 0; i < 90; i++) {
+      const p = board[i];
+      if (p) score += C[p][i];
+    }
+    return score;
+  }
+
+  /* ── 搜尋 ─────────────────────────────────────────────── */
+  class Engine {
+    constructor() {
+      this.nodes = 0;
+      this.aborted = false;
+    }
+
+    /**
+     * 準備這一手要用的分數表。
+     *
+     * 弱等級不是靠「隨機挑一個還不錯的著法」來變弱——那樣會挑到根本沒算過
+     * 的爛棋。這裡改成在評估表上加一點隨機偏差：搜尋過程本身完全自洽
+     * （alpha-beta 依然正確、照樣找得到殺棋），只是對局面的價值判斷會略有
+     * 偏差，因此棋力自然下降，而且每一局都不一樣。
+     */
+    _prepareTable(noise) {
+      if (!noise) { this.C = CONTRIB; return; }
+      const C = {};
+      for (const ch in CONTRIB) {
+        const src = CONTRIB[ch];
+        const dst = new Int32Array(90);
+        const sign = ch === ch.toUpperCase() ? 1 : -1;
+        for (let i = 0; i < 90; i++) {
+          dst[i] = src[i] + sign * Math.round((Math.random() * 2 - 1) * noise);
+        }
+        C[ch] = dst;
+      }
+      this.C = C;
+    }
+
+    // 走 / 還原：直接改同一個陣列，比每步複製棋盤快得多。
+    // 同時增量更新分數，這樣葉節點不必再掃過整個棋盤。
+    _make(from, to) {
+      const b = this.b;
+      const moving = b[from];
+      const cap = b[to];
+      const C = this.C;
+      this.score += C[moving][to] - C[moving][from];
+      if (cap) this.score -= C[cap][to];
+      b[to] = moving;
+      b[from] = '';
+      if (moving === 'K') this.kr = to;
+      else if (moving === 'k') this.kb = to;
+      return cap;
+    }
+
+    _unmake(from, to, cap) {
+      const b = this.b;
+      const moving = b[to];
+      b[from] = moving;
+      b[to] = cap;
+      const C = this.C;
+      this.score += C[moving][from] - C[moving][to];
+      if (cap) this.score += C[cap][to];
+      if (moving === 'K') this.kr = from;
+      else if (moving === 'k') this.kb = from;
+    }
+
+    // 兩將照面（白臉將）
+    _facing() {
+      if (this.kr < 0 || this.kb < 0) return false;
+      const c = colOf(this.kr);
+      if (c !== colOf(this.kb)) return false;
+      const b = this.b;
+      for (let r = rowOf(this.kb) + 1, end = rowOf(this.kr); r < end; r++) {
+        if (b[at(r, c)]) return false;
+      }
+      return true;
+    }
+
+    _inCheck(side) {
+      const king = side === RED ? this.kr : this.kb;
+      if (king < 0) return true;
+      if (this._facing()) return true;
+      return XQ.isAttacked(this.b, king, opposite(side));
+    }
+
+    /** 目前局面下 side 的所有合法著法 */
+    _legal(side) {
+      const out = [];
+      for (const m of XQ.genMoves(this.b, side)) {
+        const cap = this._make(m.from, m.to);
+        if (!this._inCheck(side)) {
+          m.cap = cap;
+          out.push(m);
+        }
+        this._unmake(m.from, m.to, cap);
+      }
+      return out;
+    }
+
+    /** 走法排序：吃大子用小子優先（MVV-LVA），其餘按歷史分數 */
+    _order(moves) {
+      for (const m of moves) {
+        if (m.cap) {
+          m.score = 1e6 + CHAR_VALUE[m.cap] * 8 - CHAR_VALUE[this.b[m.from]];
+        } else {
+          m.score = this.history[m.from * 90 + m.to] || 0;
+        }
+      }
+      moves.sort((a, b) => b.score - a.score);
+      return moves;
+    }
+
+    _timeUp() {
+      if (this.aborted) return true;
+      // 每 1024 個節點才看一次時鐘，避免 Date.now() 成為瓶頸
+      if ((++this.nodes & 1023) === 0 && Date.now() > this.deadline) this.aborted = true;
+      return this.aborted;
+    }
+
+    /** 靜態搜尋：只往下算吃子，把局面算到「沒得吃」才評估 */
+    _quiesce(side, alpha, beta, qdepth, ply) {
+      if (this._timeUp()) return 0;
+      const sign = side === RED ? 1 : -1;
+
+      if (this._inCheck(side)) {
+        // 被將軍時不能停下來評估，必須把應將的著法算完
+        if (qdepth <= 0) return sign * this.score;
+        const moves = this._order(this._legal(side));
+        if (moves.length === 0) return -(MATE - ply);
+        let best = -INF;
+        for (const m of moves) {
+          const cap = this._make(m.from, m.to);
+          const v = -this._quiesce(opposite(side), -beta, -alpha, qdepth - 1, ply + 1);
+          this._unmake(m.from, m.to, cap);
+          if (this.aborted) return 0;
+          if (v > best) best = v;
+          if (best > alpha) alpha = best;
+          if (alpha >= beta) break;
+        }
+        return best;
+      }
+
+      const stand = sign * this.score;
+      if (stand >= beta) return stand;
+      if (stand > alpha) alpha = stand;
+      if (qdepth <= 0) return stand;
+
+      let best = stand;
+      const caps = this._order(this._legal(side).filter((m) => m.cap));
+      for (const m of caps) {
+        const cap = this._make(m.from, m.to);
+        const v = -this._quiesce(opposite(side), -beta, -alpha, qdepth - 1, ply + 1);
+        this._unmake(m.from, m.to, cap);
+        if (this.aborted) return 0;
+        if (v > best) best = v;
+        if (best > alpha) alpha = best;
+        if (alpha >= beta) break;
+      }
+      return best;
+    }
+
+    _alphaBeta(side, depth, alpha, beta, ply) {
+      if (this._timeUp()) return 0;
+      if (depth <= 0) return this._quiesce(side, alpha, beta, 6, ply);
+
+      const moves = this._order(this._legal(side));
+      // 象棋中被將死與困斃（無著可走）同樣判負
+      if (moves.length === 0) return -(MATE - ply);
+
+      let best = -INF;
+      for (const m of moves) {
+        const cap = this._make(m.from, m.to);
+        const v = -this._alphaBeta(opposite(side), depth - 1, -beta, -alpha, ply + 1);
+        this._unmake(m.from, m.to, cap);
+        if (this.aborted) return 0;
+        if (v > best) best = v;
+        if (best > alpha) {
+          alpha = best;
+          if (!m.cap) this.history[m.from * 90 + m.to] = (this.history[m.from * 90 + m.to] || 0) + depth * depth;
+        }
+        if (alpha >= beta) break;
+      }
+      return best;
+    }
+
+    /**
+     * 找出 side 的一手棋。
+     * @param {string[]} board 棋盤
+     * @param {string} side 走棋方
+     * @param {object} opts maxDepth 最大深度、timeMs 時間上限、
+     *   slack 容許誤差（在最佳分數這個範圍內的著法隨機選一個，讓每局不一樣）、
+     *   avoid 應避免重複的局面 key 集合
+     * @returns {{move:{from,to}, score:number, depth:number, nodes:number}|null}
+     */
+    think(board, side, opts) {
+      const o = Object.assign({ maxDepth: 4, timeMs: 1000, slack: 0, noise: 0, avoid: null }, opts || {});
+      this.b = board.slice();
+      this.kr = XQ.findKing(this.b, RED);
+      this.kb = XQ.findKing(this.b, BLACK);
+      this._prepareTable(o.noise);
+      this.score = evaluate(this.b, this.C);   // 之後由 _make/_unmake 增量維護
+      this.history = {};
+      this.nodes = 0;
+      this.aborted = false;
+      this.deadline = Date.now() + o.timeMs;
+
+      let roots = this._order(this._legal(side));
+      if (roots.length === 0) return null;
+
+      let bestList = [{ move: roots[0], score: -INF, exact: true }];
+      let reachedDepth = 0;
+
+      for (let depth = 1; depth <= o.maxDepth; depth++) {
+        const scored = [];
+        let alpha = -INF;
+        for (const m of roots) {
+          // 搜尋窗的上界要放寬 slack，這樣「和最佳著法只差 slack 以內」的著法
+          // 才會拿到精確分數。若直接用 alpha 當上界，這些著法只會得到一個
+          // 上界值（可能剛好等於 alpha），拿去比較就會誤選到根本沒算過的爛棋。
+          const floor = alpha === -INF ? -INF : alpha - o.slack;
+          const childBeta = floor === -INF ? INF : -floor;
+          const cap = this._make(m.from, m.to);
+          let v = -this._alphaBeta(opposite(side), depth - 1, -INF, childBeta, 1);
+          // 避免無意義的重複局面
+          if (o.avoid && o.avoid.has(XQ.toFen(this.b, opposite(side)))) v -= 60;
+          this._unmake(m.from, m.to, cap);
+          if (this.aborted) break;
+          // 超過下界才是精確值；沒超過的只是上界，不能拿來挑選
+          scored.push({ move: m, score: v, exact: floor === -INF || v > floor });
+          if (v > alpha) alpha = v;
+        }
+        if (this.aborted) break;
+
+        scored.sort((a, b) => b.score - a.score);
+        bestList = scored;
+        reachedDepth = depth;
+        roots = scored.map((s) => s.move);          // 下一層先搜這一層的好棋
+        if (scored[0].score >= MATE - 100) break;    // 已經找到殺棋，不必再深入
+      }
+
+      const top = bestList[0].score;
+      const pool = bestList.filter((s) => s.exact && s.score >= top - o.slack);
+      const pick = (pool.length ? pool : bestList)[
+        Math.floor(Math.random() * (pool.length || 1))];
+      return {
+        move: { from: pick.move.from, to: pick.move.to },
+        score: pick.score,
+        depth: reachedDepth,
+        nodes: this.nodes,
+      };
+    }
+  }
+
+  const LEVELS = {
+    easy: { name: '初級', maxDepth: 2, timeMs: 500, noise: 55, slack: 0 },
+    normal: { name: '中級', maxDepth: 4, timeMs: 1200, noise: 15, slack: 0 },
+    hard: { name: '高級', maxDepth: 6, timeMs: 2500, noise: 0, slack: 0 },
+  };
+
+  root.XQEngine = { Engine, evaluate, VALUE, LEVELS, MATE };
 })(window);
 </script>
 <script>
@@ -1920,8 +2447,349 @@ footer.site-foot {
     }
   }
 
-  /* ── 五、擺棋編輯器 ───────────────────────────────── */
-  function initEditor() {
+  /* ── 五、對弈 ─────────────────────────────────────── */
+  class PlayView {
+    constructor() {
+      this.engine = new root.XQEngine.Engine();
+      this.boardHost = $('#play-board');
+      this.status = $('#play-status');
+      this.listHost = $('#play-moves');
+      this.capHost = $('#play-captured');
+      this.reviewBar = $('#play-review');
+      this.opponent = 'normal';      // easy / normal / hard / human
+      this.humanSide = XQ.RED;
+      this.buildOptions();
+      this.buildControls();
+      this.newGame();
+    }
+
+    /* ── 選項 ─────────────────────────────────────── */
+    buildOptions() {
+      const wrap = $('#play-options');
+      const group = (label, items, get, set) => {
+        const box = el('div', 'optgroup');
+        box.appendChild(el('span', 'optlabel', label));
+        const row = el('div', 'optrow');
+        for (const [value, text] of items) {
+          const b = el('button', 'chip', text);
+          b.addEventListener('click', () => {
+            set(value);
+            sync();
+            this.newGame();
+          });
+          b.dataset.value = value;
+          row.appendChild(b);
+        }
+        box.appendChild(row);
+        wrap.appendChild(box);
+        const sync = () => $$('button', row).forEach((b) =>
+          b.setAttribute('aria-pressed', String(b.dataset.value === String(get()))));
+        sync();
+        return sync;
+      };
+
+      const L = root.XQEngine.LEVELS;
+      this.syncOpponent = group('對手', [
+        ['easy', '電腦・' + L.easy.name],
+        ['normal', '電腦・' + L.normal.name],
+        ['hard', '電腦・' + L.hard.name],
+        ['human', '兩人對下'],
+      ], () => this.opponent, (v) => { this.opponent = v; });
+
+      this.syncSide = group('你執', [
+        [XQ.RED, '紅方（先走）'],
+        [XQ.BLACK, '黑方（後走）'],
+      ], () => this.humanSide, (v) => { this.humanSide = v; });
+    }
+
+    buildControls() {
+      const bar = el('div', 'controls');
+      const mk = (label, fn, cls) => {
+        const b = el('button', 'btn' + (cls ? ' ' + cls : ''), label);
+        b.addEventListener('click', fn);
+        bar.appendChild(b);
+        return b;
+      };
+      this.bNew = mk('↺ 新局', () => this.newGame(), 'primary');
+      this.bUndo = mk('⟲ 悔棋', () => this.undo());
+      this.bResign = mk('🏳 認輸', () => this.resign());
+      $('#play-controls').replaceWith(bar);
+
+      this.bBackToGame = el('button', 'btn', '回到對局');
+      this.bBackToGame.addEventListener('click', () => this.exitReview());
+      this.reviewBar.appendChild(this.bBackToGame);
+      this.reviewBar.hidden = true;
+    }
+
+    get vsComputer() { return this.opponent !== 'human'; }
+
+    setOptionsEnabled(on) {
+      $$('#play-options button').forEach((b) => { b.disabled = !on; });
+      if (this.bNew) this.bNew.disabled = !on;
+    }
+
+    /* ── 開新局 ───────────────────────────────────── */
+    /** fen 可省略；給定時就從那個局面開始下（例如從「自己擺棋」帶過來的局面） */
+    newGame(fen) {
+      if (fen !== undefined) this.startFen = fen || D.START_FEN;
+      if (!this.startFen) this.startFen = D.START_FEN;
+      const start = XQ.parseFen(this.startFen);
+      this.startBoard = start.board.slice();
+      // 執黑時把棋盤轉過來，讓自己的棋子在下方
+      const flipped = this.vsComputer && this.humanSide === XQ.BLACK;
+      this.board = new Board(this.boardHost, {
+        interactive: true,
+        flipped,
+        onMove: (f, t) => this.humanMove(f, t),
+      });
+      this.board.setPosition(start.board, start.side);
+
+      // 每開一局就換一個世代編號。電腦的搜尋是非同步啟動的，
+      // 使用者可能在它思考時就按了新局或換了選項，這時舊的結果必須丟掉，
+      // 否則會把算好的著法套到新棋盤上。
+      this.gen = (this.gen || 0) + 1;
+      this.frames = [start.board.slice()];      // 每一步之後的局面，供回顧
+      this.moves = [];                          // {from,to,text,captured}
+      this.side = start.side;
+      this.over = false;
+      this.reviewAt = -1;
+      this.thinking = false;
+      this.seen = new Map();
+      this.countSeen();
+      this.listHost.innerHTML = '';
+      this.capHost.innerHTML = '';
+      this.reviewBar.hidden = true;
+      this.refresh();
+      this.maybeEngineMove();
+    }
+
+    countSeen() {
+      const key = XQ.toFen(this.board.board, this.side);
+      this.seen.set(key, (this.seen.get(key) || 0) + 1);
+      return this.seen.get(key);
+    }
+
+    /* ── 狀態顯示 ─────────────────────────────────── */
+    say(text, kind) {
+      this.status.textContent = text;
+      this.status.className = 'status' + (kind ? ' ' + kind : '');
+    }
+
+    sideName(s) { return s === XQ.RED ? '紅方' : '黑方'; }
+
+    refresh() {
+      const human = !this.vsComputer || this.side === this.humanSide;
+      this.setOptionsEnabled(!this.thinking);
+      this.board.locked = this.over || this.thinking || this.reviewAt >= 0 || !human;
+      this.bUndo.disabled = this.over || this.thinking || this.reviewAt >= 0 ||
+        this.moves.length === 0;
+      this.bResign.disabled = this.over || this.reviewAt >= 0;
+      this.renderCaptured();
+      if (this.over || this.reviewAt >= 0) return;
+      if (this.thinking) { this.say('電腦思考中⋯⋯', ''); return; }
+      const checked = XQ.inCheck(this.board.board, this.side);
+      const who = this.sideName(this.side);
+      if (this.vsComputer) {
+        this.say((checked ? '將軍！' : '') +
+          (human ? '輪你走棋（' + who + '）。點自己的棋子再點目標位置。'
+                 : '輪電腦走棋（' + who + '）。'), checked ? 'bad' : '');
+      } else {
+        this.say((checked ? '將軍！' : '') + '輪' + who + '走棋。', checked ? 'bad' : '');
+      }
+    }
+
+    renderCaptured() {
+      const start = this.startBoard;
+      const now = this.board.board;
+      const count = (b) => {
+        const m = {};
+        for (const p of b) if (p) m[p] = (m[p] || 0) + 1;
+        return m;
+      };
+      const a = count(start), c = count(now);
+      const lost = { r: [], b: [] };
+      for (const p in a) {
+        for (let i = 0; i < a[p] - (c[p] || 0); i++) {
+          lost[XQ.colorOf(p)].push(XQ.NAMES[XQ.colorOf(p)][XQ.typeOf(p)]);
+        }
+      }
+      this.capHost.innerHTML = '';
+      for (const s of [XQ.BLACK, XQ.RED]) {
+        if (!lost[s].length) continue;
+        const row = el('div', 'caprow');
+        row.appendChild(el('span', 'caplabel', '被吃的' + this.sideName(s) + '子'));
+        for (const name of lost[s]) {
+          row.appendChild(el('span', 'capchip ' + (s === XQ.RED ? 'red' : 'black'), name));
+        }
+        this.capHost.appendChild(row);
+      }
+    }
+
+    /* ── 走一步 ───────────────────────────────────── */
+    /**
+     * 走一步並更新棋譜。gen 是開局世代：走子中間有一段等待動畫的時間，
+     * 使用者可能剛好在這時開了新局，因此動畫前後都要確認世代還是同一個，
+     * 否則就會把這一手記到新的一局上。
+     */
+    async applyMove(from, to, gen) {
+      if (this.gen !== gen) return true;
+      const bd = this.board;                  // 捕捉當下的棋盤，避免中途被換掉
+      const board = bd.board;
+      const text = XQ.moveToChinese(board, from, to);
+      const captured = board[to];
+      this.moves.push({ from, to, text, captured });
+      this.addMoveRow(this.moves.length - 1);
+      await bd.move(from, to);
+      if (this.gen !== gen) return true;      // 動畫期間開了新局，這一手作廢
+      this.frames.push(bd.board.slice());
+      this.side = XQ.opposite(this.side);
+      const repeats = this.countSeen();
+      return this.checkEnd(repeats);
+    }
+
+    addMoveRow(i) {
+      const m = this.moves[i];
+      const redMove = XQ.colorOf(this.frames[i][m.from]) === XQ.RED;
+      let ol = $('ol', this.listHost);
+      if (!ol) { ol = el('ol'); this.listHost.appendChild(ol); }
+      const li = el('li', redMove ? 'red' : 'black');
+      li.append(
+        el('span', 'n', redMove ? String(Math.floor(i / 2) + 1) + '.' : ''),
+        el('span', 'mv', m.text),
+        el('span', 'note', m.captured
+          ? '吃' + XQ.NAMES[XQ.colorOf(m.captured)][XQ.typeOf(m.captured)] : '')
+      );
+      li.addEventListener('click', () => this.review(i + 1));
+      ol.appendChild(li);
+      li.scrollIntoView({ block: 'nearest' });
+    }
+
+    /** 回傳 true 表示棋局已結束 */
+    checkEnd(repeats) {
+      if (XQ.legalMoves(this.board.board, this.side).length === 0) {
+        const winner = this.sideName(XQ.opposite(this.side));
+        const how = XQ.inCheck(this.board.board, this.side) ? '被將死' : '無著可走（困斃）';
+        this.finish(winner + '勝——' + this.sideName(this.side) + how + '。');
+        return true;
+      }
+      if (repeats >= 3) {
+        this.finish('同一局面出現三次，判和。');
+        return true;
+      }
+      return false;
+    }
+
+    finish(text) {
+      this.over = true;
+      this.board.locked = true;
+      const mine = this.vsComputer &&
+        text.startsWith(this.sideName(this.humanSide)) && text.includes('勝');
+      this.say((mine ? '🎉 ' : '') + text + '　按「新局」再來一盤，或點左邊的著法回顧棋譜。',
+        mine ? 'good' : '');
+      this.refresh();
+    }
+
+    async humanMove(from, to) {
+      if (this.over || this.thinking || this.reviewAt >= 0) return;
+      if (this.vsComputer && this.side !== this.humanSide) return;
+      const ended = await this.applyMove(from, to, this.gen);
+      this.refresh();
+      if (!ended) this.maybeEngineMove();
+    }
+
+    /* ── 電腦走棋 ─────────────────────────────────── */
+    maybeEngineMove() {
+      if (this.over || !this.vsComputer || this.side === this.humanSide) return;
+      this.thinking = true;
+      this.refresh();
+      const gen = this.gen;
+      // 先讓瀏覽器把「思考中」畫出來，再開始算（搜尋是同步的，會擋住畫面）
+      setTimeout(async () => {
+        if (this.gen !== gen) return;          // 已經開了新局
+        const cfg = Object.assign({}, root.XQEngine.LEVELS[this.opponent], {
+          avoid: new Set(this.seen.keys()),
+        });
+        const res = this.engine.think(this.board.board, this.side, cfg);
+        if (this.gen !== gen) return;          // 思考期間開了新局，結果作廢
+        this.thinking = false;
+        if (this.over) return;
+        if (!res) { this.refresh(); return; }
+        const ended = await this.applyMove(res.move.from, res.move.to, gen);
+        if (this.gen !== gen) return;
+        this.refresh();
+        if (!ended && this.vsComputer && this.side !== this.humanSide) {
+          this.maybeEngineMove();              // 兩台電腦互下的情況（理論上不會發生）
+        }
+      }, 40);
+    }
+
+    /* ── 悔棋 ─────────────────────────────────────── */
+    undo() {
+      if (!this.moves.length || this.thinking) return;
+      // 對電腦時退兩手，讓回合回到自己
+      const back = this.vsComputer && this.moves.length >= 2 ? 2 : 1;
+      for (let i = 0; i < back; i++) {
+        const m = this.moves.pop();
+        if (!m) break;
+        this.frames.pop();
+        const key = XQ.toFen(this.frames[this.frames.length - 1],
+          XQ.opposite(this.side));
+        const n = (this.seen.get(key) || 1) - 1;
+        if (n <= 0) this.seen.delete(key); else this.seen.set(key, n);
+        this.side = XQ.opposite(this.side);
+        const ol = $('ol', this.listHost);
+        if (ol && ol.lastChild) ol.removeChild(ol.lastChild);
+      }
+      this.over = false;
+      this.board.setPosition(this.frames[this.frames.length - 1], this.side);
+      const last = this.moves[this.moves.length - 1];
+      if (last) this.board.markMove(last.from, last.to);
+      this.refresh();
+    }
+
+    resign() {
+      if (this.over) return;
+      const loser = this.vsComputer ? this.humanSide : this.side;
+      this.finish(this.sideName(XQ.opposite(loser)) + '勝——' +
+        this.sideName(loser) + '認輸。');
+    }
+
+    /* ── 回顧棋譜 ─────────────────────────────────── */
+    review(n) {
+      if (n < 0 || n >= this.frames.length) return;
+      this.reviewAt = n;
+      const first = XQ.parseFen(this.startFen).side;
+      const side = n % 2 === 0 ? first : XQ.opposite(first);
+      this.board.setPosition(this.frames[n], side);
+      if (n > 0) this.board.markMove(this.moves[n - 1].from, this.moves[n - 1].to);
+      this.board.locked = true;
+      $$('li', this.listHost).forEach((li, i) => li.classList.toggle('on', i === n - 1));
+      this.reviewBar.hidden = false;
+      this.say('回顧第 ' + n + ' 手' + (this.moves[n - 1] ? '（' + this.moves[n - 1].text + '）' : '') +
+        '。這是回顧模式，按「回到對局」繼續下棋。', '');
+      this.bUndo.disabled = true;
+      this.bResign.disabled = true;
+    }
+
+    /** 從指定局面開一局（供「自己擺棋」與分享連結使用） */
+    startFrom(fen) {
+      this.newGame(fen);
+    }
+
+    exitReview() {
+      this.reviewAt = -1;
+      this.reviewBar.hidden = true;
+      $$('li', this.listHost).forEach((li) => li.classList.remove('on'));
+      this.board.setPosition(this.frames[this.frames.length - 1], this.side);
+      const last = this.moves[this.moves.length - 1];
+      if (last) this.board.markMove(last.from, last.to);
+      this.refresh();
+      if (this.over) this.say('棋局已結束，按「新局」再來一盤。', '');
+    }
+  }
+
+  /* ── 六、擺棋編輯器 ───────────────────────────────── */
+  function initEditor(onPlay) {
     const PALETTE = [
       ['K', 'red'], ['A', 'red'], ['B', 'red'], ['N', 'red'], ['R', 'red'], ['C', 'red'], ['P', 'red'],
       ['k', 'black'], ['a', 'black'], ['b', 'black'], ['n', 'black'], ['r', 'black'], ['c', 'black'], ['p', 'black'],
@@ -2023,6 +2891,12 @@ footer.site-foot {
         : '連結已顯示在下方欄位，請手動複製。', copied ? '' : 'bad');
     });
 
+    $('#ed-play').addEventListener('click', () => {
+      const p = problems();
+      if (p.length) { flash('⚠ ' + p.join('；'), 'bad'); return; }
+      onPlay(XQ.toFen(board, side));
+    });
+
     $('#ed-solve').addEventListener('click', () => {
       solHost.innerHTML = '';
       const p = problems();
@@ -2105,14 +2979,18 @@ footer.site-foot {
     initTactics();
     const puz = new PuzzleView();
     puz.load(D.PUZZLES[0]);
-    initEditor();
-    const go = initTabs();
+    const play = new PlayView();
+    let go = null;
+    initEditor((fen) => { play.startFrom(fen); if (go) go('play'); });
+    go = initTabs();
 
     // 分享連結：#fen=... 直接開啟擺棋頁；#puzzle=p3 直接開某一題
     const hash = decodeURIComponent(location.hash.replace(/^#/, ''));
     const m = /^fen=(.+)$/.exec(hash);
     const mp = /^puzzle=(.+)$/.exec(hash);
-    if (m) { root.__loadEditorFen(m[1]); go('editor'); }
+    const mg = /^play=(.+)$/.exec(hash);
+    if (mg) { play.startFrom(mg[1]); go('play'); }
+    else if (m) { root.__loadEditorFen(m[1]); go('editor'); }
     else if (mp) {
       const p = D.PUZZLES.find((x) => x.id === mp[1]);
       if (p) { puz.load(p); go('puzzle'); }

@@ -60,6 +60,10 @@
 
 * { box-sizing: border-box; }
 
+/* hidden 屬性必須贏過帶 display 的類別選擇器（例如 .controls 的 flex），
+   否則 el.hidden = true 不會真的隱藏元素 */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   background: var(--bg);
@@ -287,3 +291,35 @@ footer.site-foot {
   color: var(--ink-soft); font-size: .87rem;
 }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* ── 對弈：選項與被吃的子 ─────────────────────────────── */
+.options { display: flex; flex-wrap: wrap; gap: 22px; margin: 0 0 22px; }
+.optgroup { display: flex; flex-direction: column; gap: 6px; }
+.optlabel { font-size: .8rem; color: var(--ink-soft); letter-spacing: .06em; }
+.optrow { display: flex; flex-wrap: wrap; gap: 6px; }
+button.chip {
+  font: inherit; font-size: .9rem; cursor: pointer;
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+  padding: 6px 14px; border-radius: 999px;
+  transition: background .15s, border-color .15s, color .15s;
+}
+/* 已選取的 chip 不套用 hover 的文字色，否則會變成綠字配綠底而看不見 */
+button.chip:hover:not(:disabled):not([aria-pressed="true"]) {
+  border-color: var(--accent); color: var(--accent);
+}
+button.chip:disabled { opacity: .5; cursor: default; }
+button.chip[aria-pressed="true"] {
+  background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600;
+}
+
+.captured { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; min-height: 1px; }
+.caprow { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.caplabel { font-size: .8rem; color: var(--ink-soft); margin-right: 4px; }
+.capchip {
+  font-family: "Noto Serif TC", "PingFang TC", serif; font-weight: 700; font-size: .88rem;
+  width: 1.9em; height: 1.9em; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--bg); border: 1px solid var(--line);
+}
+.capchip.red { color: var(--red); }
+.capchip.black { color: var(--ink); }

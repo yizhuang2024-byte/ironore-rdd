@@ -9,6 +9,7 @@
   const XQ = root.XQ;
   const { W, H, at, rowOf, colOf } = XQ;
 
+  const CN_DIGITS = ['一', '二', '三', '四', '五', '六', '七', '八', '九'];
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const U = 100;                      // SVG 每格單位
   const GW = (W - 1) * U, GH = (H - 1) * U;
@@ -124,23 +125,28 @@
     }
 
     _coordBar(which) {
+      const flipped = !!this.opts.flipped;
+      // 未翻轉時上方是黑方；翻轉後（黑方在下）兩條座標列互換
+      const blackSide = (which === 'top') !== flipped;
       const bar = el('div', 'xq-coords xq-coords-' + which);
-      const labels = which === 'top'
-        ? ['1','2','3','4','5','6','7','8','9']       // 黑方路數，由黑方右手邊起算
-        : ['九','八','七','六','五','四','三','二','一']; // 紅方路數，由紅方右手邊起算
-      labels.forEach((s, i) => {
+      for (let i = 0; i < W; i++) {
+        const col = flipped ? W - 1 - i : i;
         const n = el('span', null);
-        n.textContent = s;
+        // 黑方由黑方右手邊起算 1~9；紅方由紅方右手邊起算 一~九（紅方路數 = 9 - col）
+        n.textContent = blackSide ? String(col + 1) : CN_DIGITS[W - 1 - col];
         n.style.left = (i / (W - 1)) * 100 + '%';     // 與棋子用同一套定位
         bar.appendChild(n);
-      });
+      }
       return bar;
     }
 
-    /* 座標換算 */
+    /* 座標換算（翻轉時等於把棋盤旋轉 180 度） */
     _place(node, index) {
-      node.style.left = (colOf(index) / (W - 1)) * 100 + '%';
-      node.style.top = (rowOf(index) / (H - 1)) * 100 + '%';
+      const f = !!this.opts.flipped;
+      const col = f ? W - 1 - colOf(index) : colOf(index);
+      const row = f ? H - 1 - rowOf(index) : rowOf(index);
+      node.style.left = (col / (W - 1)) * 100 + '%';
+      node.style.top = (row / (H - 1)) * 100 + '%';
     }
 
     /* ── 設定局面（不做動畫） ─────────────────────────── */
@@ -263,13 +269,14 @@
     /* ── 點擊處理 ─────────────────────────────────────── */
     _indexFromEvent(e) {
       const r = this.inner.getBoundingClientRect();
-      const c = Math.round(((e.clientX - r.left) / r.width) * (W - 1));
-      const row = Math.round(((e.clientY - r.top) / r.height) * (H - 1));
+      let c = Math.round(((e.clientX - r.left) / r.width) * (W - 1));
+      let row = Math.round(((e.clientY - r.top) / r.height) * (H - 1));
       if (c < 0 || c >= W || row < 0 || row >= H) return -1;
       // 點得太偏就忽略，避免誤觸
       const dx = Math.abs((e.clientX - r.left) / r.width * (W - 1) - c);
       const dy = Math.abs((e.clientY - r.top) / r.height * (H - 1) - row);
       if (dx > 0.48 || dy > 0.48) return -1;
+      if (this.opts.flipped) { c = W - 1 - c; row = H - 1 - row; }
       return at(row, c);
     }
 

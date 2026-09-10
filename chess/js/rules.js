@@ -86,6 +86,11 @@
   ];
   const BISHOP_STEPS = [[-2, -2], [-2, 2], [2, -2], [2, 2]];
   const ADVISOR_STEPS = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+  // 反查馬的攻擊來源：[馬相對目標的 dr, dc, 馬腿相對目標的 dr, dc]
+  const KNIGHT_ATTACK = [
+    [-2, -1, -1, -1], [-2, 1, -1, 1], [2, -1, 1, -1], [2, 1, 1, 1],
+    [-1, -2, -1, -1], [-1, 2, -1, 1], [1, -2, 1, -1], [1, 2, 1, 1],
+  ];
 
   function genPieceMoves(board, from, out) {
     const p = board[from];
@@ -204,13 +209,95 @@
     return true;
   }
 
+  /**
+   * 某一格是否被 by 方的棋子攻擊（不含白臉將，那是另一條規則）。
+   *
+   * 這裡刻意不產生對手的完整走法表，而是從目標格「反查」各種棋子可能的
+   * 攻擊來源，成本從一次完整走法產生降到幾十次陣列讀取。
+   * 對弈 AI 的搜尋幾乎每個節點都要判斷將軍，這個差別很關鍵。
+   *
+   * 「攻擊」的定義是「這一格若有 by 方的敵子，會不會被吃掉」。
+   * 在空格上，這與「有沒有走法走到該格」並不等價：炮隔著砲架控制的空格
+   * 不會產生走法，而炮的閒著目標也不算攻擊。將帥永遠是棋子，
+   * 所以用於王安全判斷時兩者完全一致（已用亂數局面逐格比對驗證）。
+   */
+  function isAttacked(board, sq, by) {
+    const r = rowOf(sq), c = colOf(sq);
+
+    // 車、炮、以及貼身的將帥：沿四個方向往外掃
+    for (const [dr, dc] of ROOK_DIRS) {
+      let tr = r + dr, tc = c + dc, dist = 1, first = '';
+      while (onBoard(tr, tc)) {
+        first = board[at(tr, tc)];
+        if (first) break;
+        tr += dr; tc += dc; dist++;
+      }
+      if (!first) continue;
+      if (colorOf(first) === by) {
+        const t = typeOf(first);
+        if (t === 'R') return true;
+        // 將帥只能在九宮內走一格
+        if (t === 'K' && dist === 1 && inPalace(by, r, c)) return true;
+      }
+      // 越過第一個子（砲架）之後的第一個子若是炮，就打得到
+      let sr = tr + dr, sc = tc + dc, second = '';
+      while (onBoard(sr, sc)) {
+        second = board[at(sr, sc)];
+        if (second) break;
+        sr += dr; sc += dc;
+      }
+      if (second && colorOf(second) === by && typeOf(second) === 'C') return true;
+    }
+
+    // 馬：從八個可能的來源反查，馬腿是目標與馬之間的那個斜角
+    const N_PIECE = by === RED ? 'N' : 'n';
+    for (const [a, b, lr, lc] of KNIGHT_ATTACK) {
+      const tr = r + a, tc = c + b;
+      if (!onBoard(tr, tc)) continue;
+      if (board[at(tr, tc)] !== N_PIECE) continue;
+      if (board[at(r + lr, c + lc)]) continue;   // 蹩馬腿
+      return true;
+    }
+
+    // 兵卒：紅兵往上走，黑卒往下走；過河後才能橫吃
+    const P_PIECE = by === RED ? 'P' : 'p';
+    const back = by === RED ? r + 1 : r - 1;
+    if (onBoard(back, c) && board[at(back, c)] === P_PIECE) return true;
+    for (const dc of [-1, 1]) {
+      if (!onBoard(r, c + dc)) continue;
+      // 橫吃的兵與目標同一列，因此用目標的列判斷它是否已過河
+      if (board[at(r, c + dc)] === P_PIECE && !ownHalf(by, r)) return true;
+    }
+
+    // 士：九宮內斜走一格
+    const A_PIECE = by === RED ? 'A' : 'a';
+    if (inPalace(by, r, c)) {
+      for (const [dr, dc] of ADVISOR_STEPS) {
+        const tr = r + dr, tc = c + dc;
+        if (onBoard(tr, tc) && board[at(tr, tc)] === A_PIECE) return true;
+      }
+    }
+
+    // 象：田字，且不過河
+    const B_PIECE = by === RED ? 'B' : 'b';
+    if (ownHalf(by, r)) {
+      for (const [dr, dc] of BISHOP_STEPS) {
+        const tr = r + dr, tc = c + dc;
+        if (!onBoard(tr, tc)) continue;
+        if (board[at(tr, tc)] !== B_PIECE) continue;
+        if (board[at(r + dr / 2, c + dc / 2)]) continue;  // 塞象眼
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   function inCheck(board, side) {
     const king = findKing(board, side);
     if (king < 0) return true;                 // 將帥被吃視為已負
     if (kingsFacing(board)) return true;
-    const foes = genMoves(board, opposite(side));
-    for (const m of foes) if (m.to === king) return true;
-    return false;
+    return isAttacked(board, king, opposite(side));
   }
 
   function applyMove(board, move) {
@@ -399,7 +486,7 @@
     colorOf, typeOf, opposite, inPalace, ownHalf,
     parseFen, toFen, cloneBoard,
     genMoves, legalMoves, movesFrom, isLegalMove, applyMove,
-    findKing, kingsFacing, inCheck, isMated, gameOver,
+    findKing, kingsFacing, isAttacked, inCheck, isMated, gameOver,
     moveToChinese, NAMES,
     checkingMoves, findMate, flattenLine, mateDistance, allMatingMoves,
   };

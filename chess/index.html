@@ -19,6 +19,7 @@
       <button data-view="notation" role="tab" aria-selected="false">看懂棋譜</button>
       <button data-view="tactics" role="tab" aria-selected="false">殺法戰術</button>
       <button data-view="puzzle" role="tab" aria-selected="false">殘局挑戰</button>
+      <button data-view="play" role="tab" aria-selected="false">對弈</button>
       <button data-view="editor" role="tab" aria-selected="false">自己擺棋</button>
     </nav>
   </div>
@@ -52,8 +53,12 @@
         <div class="t"><span>④ 殘局挑戰</span></div>
         <div class="d">九道由淺入深的排局。你在棋盤上真的走子，電腦會判斷這一著能不能殺，並且替黑方應將。</div>
       </button>
+      <button class="pick" data-goto="play">
+        <div class="t"><span>⑤ 對弈</span></div>
+        <div class="d">在完整的棋盤上真的下一盤。可以跟三種強度的電腦對手下，也可以兩個人輪流用同一台裝置對弈。</div>
+      </button>
       <button class="pick" data-goto="editor">
-        <div class="t"><span>⑤ 自己擺棋</span></div>
+        <div class="t"><span>⑥ 自己擺棋</span></div>
         <div class="d">擺出你想考別人的局面，讓電腦驗算有沒有殺法，再把連結分享出去給朋友破解。</div>
       </button>
     </div>
@@ -165,12 +170,42 @@
     </div>
   </section>
 
+  <!-- ── 對弈 ─────────────────────────────────────── -->
+  <section class="view" id="view-play">
+    <h1>對弈</h1>
+    <p class="lead">
+      從開局擺好的完整棋盤下一盤棋。點自己的棋子，棋盤會標出所有合法落點，再點目標位置就走子。
+      電腦對手會即時計算應手；想反悔可以按「悔棋」，想看剛才怎麼走到這裡，點右邊任何一手就能回顧。
+    </p>
+
+    <div id="play-options" class="options"></div>
+
+    <div class="split">
+      <div>
+        <div id="play-board"></div>
+        <div id="play-controls"></div>
+        <div class="status" id="play-status"></div>
+        <div id="play-captured" class="captured"></div>
+      </div>
+      <div>
+        <h3>棋譜</h3>
+        <div class="controls" id="play-review"></div>
+        <div class="movelist" id="play-moves"></div>
+        <p class="lead" style="font-size:.86rem;margin-top:12px">
+          電腦的強度差別在於它往前推算幾步，以及對局面價值的判斷有多精準：
+          初級只看兩步且判斷會有偏差，高級會推算到六步且完全照最佳判斷走。
+        </p>
+      </div>
+    </div>
+  </section>
+
   <!-- ── 擺棋 ─────────────────────────────────────── -->
   <section class="view" id="view-editor">
     <h1>自己擺棋</h1>
     <p class="lead">
       選一個棋子，再點棋盤就能把它放上去；選「清除」則可以拿掉棋子。
-      擺好之後可以讓電腦驗算有沒有連將殺，或是把連結複製給朋友，讓他們來破解你出的題目。
+      擺好之後可以讓電腦驗算有沒有連將殺、直接從這個局面跟電腦對弈，
+      或是把連結複製給朋友，讓他們來破解你出的題目。
     </p>
     <div class="split">
       <div>
@@ -196,6 +231,7 @@
 
         <div class="controls">
           <button class="btn primary" id="ed-solve">🔍 找出殺法</button>
+          <button class="btn" id="ed-play">▶ 從這個局面開弈</button>
           <button class="btn" id="ed-share">🔗 複製分享連結</button>
           <button class="btn" id="ed-load">載入下方 FEN</button>
         </div>
@@ -221,6 +257,7 @@
 
 <script src="js/rules.js"></script>
 <script src="js/board.js"></script>
+<script src="js/engine.js"></script>
 <script src="js/data.js"></script>
 <script src="js/app.js"></script>
 </body>
