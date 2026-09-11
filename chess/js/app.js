@@ -678,7 +678,7 @@
       this.board.locked = true;
       const mine = this.vsComputer &&
         text.startsWith(this.sideName(this.humanSide)) && text.includes('勝');
-      this.say((mine ? '🎉 ' : '') + text + '　按「新局」再來一盤，或點左邊的著法回顧棋譜。',
+      this.say((mine ? '🎉 ' : '') + text + '　按「新局」再來一盤，或點棋譜中的著法回顧。',
         mine ? 'good' : '');
       this.refresh();
     }

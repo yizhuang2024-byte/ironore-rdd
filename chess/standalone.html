@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>象棋學堂 — 棋譜、戰術與殘局破解</title>
-<meta name="description" content="從棋子走法、記譜法到殺法戰術與殘局挑戰，用會動的棋盤一步一步看懂中國象棋。可自行擺設局面讓別人破解。">
+<meta name="description" content="從棋子走法、記譜法到殺法戰術與殘局挑戰，用會動的棋盤一步一步看懂中國象棋。還可以跟電腦對弈，或自行擺設局面讓別人破解。">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='%23b3231f'/><text x='50' y='50' font-size='58' text-anchor='middle' dominant-baseline='central' fill='%23fff' font-family='serif'>帥</text></svg>">
 <style>
 /* ── 基礎 ─────────────────────────────────────────────── */
@@ -355,9 +355,9 @@ button.chip[aria-pressed="true"] {
 
   <!-- ── 首頁 ─────────────────────────────────────── -->
   <section class="view active" id="view-home">
-    <h1>從第一步棋，到親手解開一盤殘局</h1>
+    <h1>從第一步棋，到親手下完一盤棋</h1>
     <p class="lead">
-      這裡把中國象棋拆成四件事：棋子怎麼走、棋譜怎麼讀、殺法長什麼樣子、以及自己動手把對方將死。
+      這裡把中國象棋拆成幾件事：棋子怎麼走、棋譜怎麼讀、殺法長什麼樣子、自己動手把對方將死，以及真的下一盤。
       每一個範例都是會動的棋盤——你可以一步一步走、也可以讓它自動演一遍，
       看清楚每個子究竟移到了哪裡、為什麼那樣走。
     </p>
@@ -501,7 +501,7 @@ button.chip[aria-pressed="true"] {
     <h1>對弈</h1>
     <p class="lead">
       從開局擺好的完整棋盤下一盤棋。點自己的棋子，棋盤會標出所有合法落點，再點目標位置就走子。
-      電腦對手會即時計算應手；想反悔可以按「悔棋」，想看剛才怎麼走到這裡，點右邊任何一手就能回顧。
+      電腦對手會即時計算應手；想反悔可以按「悔棋」，想看剛才怎麼走到這裡，點棋譜中任何一手就能回顧。
     </p>
 
     <div id="play-options" class="options"></div>
@@ -511,11 +511,12 @@ button.chip[aria-pressed="true"] {
         <div id="play-board"></div>
         <div id="play-controls"></div>
         <div class="status" id="play-status"></div>
+        <!-- 回顧模式的出口要緊接在說明它的訊息旁邊 -->
+        <div class="controls" id="play-review"></div>
         <div id="play-captured" class="captured"></div>
       </div>
       <div>
         <h3>棋譜</h3>
-        <div class="controls" id="play-review"></div>
         <div class="movelist" id="play-moves"></div>
         <p class="lead" style="font-size:.86rem;margin-top:12px">
           電腦的強度差別在於它往前推算幾步，以及對局面價值的判斷有多精準：
@@ -2684,7 +2685,7 @@ button.chip[aria-pressed="true"] {
       this.board.locked = true;
       const mine = this.vsComputer &&
         text.startsWith(this.sideName(this.humanSide)) && text.includes('勝');
-      this.say((mine ? '🎉 ' : '') + text + '　按「新局」再來一盤，或點左邊的著法回顧棋譜。',
+      this.say((mine ? '🎉 ' : '') + text + '　按「新局」再來一盤，或點棋譜中的著法回顧。',
         mine ? 'good' : '');
       this.refresh();
     }
