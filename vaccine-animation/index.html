@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>疫苗怎麼作用？</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    --ink: #050b18; --panel: #0c1730; --panel-2: #10203f; --line: #1d2d52;
+    --text: #e8f0ff; --muted: #93a6cc; --accent: #3ce0c8; --gold: #ffd166;
+    --sans: "Noto Sans TC", "Noto Sans CJK TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--ink); }
+  body { margin: 0; background: var(--ink); color: var(--text); font: 16px/1.6 var(--sans); padding-inline: 16px; padding-block: 24px 64px; }
+  .wrap { max-width: 1320px; margin: 0 auto; display: grid; gap: 40px; }
+  header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
+  header.top h1 { margin: 0; font-size: clamp(28px, 4vw, 44px); font-weight: 900; line-height: 1.15; text-wrap: balance; }
+  header.top h1 small { display: block; font-size: 0.42em; font-weight: 500; color: var(--muted); letter-spacing: 0.02em; margin-top: 4px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { font-size: 13px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; background: var(--panel); }
+
+  .player-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
+  @media (max-width: 1000px) { .player-grid { grid-template-columns: minmax(0, 1fr); } }
+  .stage { position: relative; border-radius: 16px; overflow: hidden; border: 1px solid var(--line); background: #000; aspect-ratio: 16 / 9; max-width: 100%; }
+  .stage canvas { display: block; width: 100%; height: 100%; cursor: pointer; }
+  .big-play { position: absolute; inset: 0; margin: auto; width: 96px; height: 96px; border-radius: 50%; border: 2px solid var(--accent); background: rgba(5, 11, 24, 0.7); color: var(--accent); display: grid; place-items: center; cursor: pointer; }
+  .big-play svg { width: 40px; height: 40px; margin-left: 6px; }
+  .big-play:focus-visible, button:focus-visible, .seek:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 12px; }
+  .btn { font: 500 14px var(--sans); color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+  .btn:hover { border-color: var(--accent); }
+  .btn svg { width: 16px; height: 16px; }
+  .time { font: 500 14px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .seek { flex: 1 1 100%; order: -1; position: relative; height: 22px; cursor: pointer; display: flex; gap: 4px; align-items: center; touch-action: none; }
+  .seek .seg { position: relative; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+  .seek .seg i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #3ce0c8, #4da3ff); width: 0; }
+  .seek .head { position: absolute; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: #fff; box-shadow: 0 0 12px #7cf3ff; pointer-events: none; }
+  .subs { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .subs button { font: 500 14px var(--sans); color: var(--muted); background: var(--panel); border: 0; padding: 8px 12px; cursor: pointer; }
+  .subs button + button { border-left: 1px solid var(--line); }
+  .subs button[aria-pressed="true"] { background: var(--accent); color: #032320; font-weight: 700; }
+  .spacer { flex: 1; }
+  .label-sm { font-size: 13px; color: var(--muted); letter-spacing: 0.04em; }
+
+  .chapters { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: grid; gap: 4px; }
+  .chapters h2 { font-size: 14px; color: var(--muted); font-weight: 500; letter-spacing: 0.08em; margin: 4px 8px 8px; }
+  .ch { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; text-align: left; width: 100%; background: transparent; color: var(--text); border: 1px solid transparent; border-radius: 10px; padding: 8px; cursor: pointer; font: inherit; }
+  .ch:hover { background: var(--panel-2); }
+  .ch[aria-current="true"] { background: var(--panel-2); border-color: var(--accent); }
+  .ch .n { font: 500 13px var(--mono); color: var(--accent); background: rgba(60, 224, 200, 0.1); border-radius: 8px; text-align: center; padding: 4px 0; }
+  .ch .t { line-height: 1.25; }
+  .ch .t b { display: block; font-size: 15px; }
+  .ch .t span { font-size: 12px; color: var(--muted); }
+  .ch .ts { font: 500 12px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  section h2.sec { font-size: clamp(22px, 2.6vw, 30px); font-weight: 900; margin: 0 0 4px; text-wrap: balance; }
+  section p.lead { margin: 0 0 20px; color: var(--muted); max-width: 65ch; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; display: grid; grid-template-rows: auto 1fr; cursor: pointer; text-align: left; color: inherit; font: inherit; padding: 0; }
+  .card:hover { border-color: var(--c); }
+  .card canvas { width: 100%; aspect-ratio: 16 / 10; display: block; background: radial-gradient(circle at 50% 45%, #0f2248, #050b18 75%); }
+  .card .body { padding: 14px 16px 16px; display: grid; gap: 6px; align-content: start; border-top: 2px solid var(--c); }
+  .card .name { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .card .name b { font-size: 19px; }
+  .card .name span { font-size: 13px; color: var(--c); font-weight: 500; }
+  .card p { margin: 0; font-size: 14px; color: var(--text); }
+  .card p.en { color: var(--muted); font-size: 13px; line-height: 1.5; }
+  .card .jump { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+
+  .script { display: grid; gap: 14px; }
+  details.sc { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 4px 16px; }
+  details.sc summary { cursor: pointer; padding: 10px 0; font-weight: 700; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  details.sc summary .ts { font: 500 12px var(--mono); color: var(--accent); }
+  details.sc summary span.en { font-weight: 500; font-size: 13px; color: var(--muted); }
+  .line { display: grid; grid-template-columns: 64px 1fr; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+  .line .ts { font: 500 12px var(--mono); color: var(--muted); padding-top: 3px; background: none; border: 0; cursor: pointer; text-align: left; }
+  .line .ts:hover { color: var(--accent); }
+  .line .zh { display: block; }
+  .line .en { display: block; color: var(--muted); font-size: 14px; }
+  footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 16px; display: grid; gap: 4px; }
+  @media (prefers-reduced-motion: reduce) { .card canvas { animation: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>疫苗怎麼作用？<small>How Do Vaccines Work? · 一支 97 秒的中英雙語科普動畫</small></h1>
+    <div class="meta"><span class="chip">10 章節 Chapters</span><span class="chip">中英字幕 Bilingual</span><span class="chip">一般大眾 General public</span></div>
+  </header>
+
+  <div class="player-grid">
+    <div>
+      <div class="stage">
+        <canvas id="cv" width="1920" height="1080" aria-label="動畫畫面 Animation"></canvas>
+        <button class="big-play" id="bigPlay" aria-label="播放 Play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg></button>
+      </div>
+      <div class="controls">
+        <div class="seek" id="seek" role="slider" tabindex="0" aria-label="播放進度 Progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+        <button class="btn" id="playBtn" aria-label="播放 Play"></button>
+        <span class="time" id="time">00:00 / 00:00</span>
+        <span class="spacer"></span>
+        <span class="label-sm">字幕 Subtitles</span>
+        <div class="subs" id="subs" role="group" aria-label="字幕 Subtitles">
+          <button id="sub-both" data-m="both" aria-pressed="true">中英</button>
+          <button id="sub-zh" data-m="zh" aria-pressed="false">中文</button>
+          <button id="sub-en" data-m="en" aria-pressed="false">EN</button>
+          <button id="sub-off" data-m="off" aria-pressed="false">關閉</button>
+        </div>
+        <button class="btn" id="fsBtn" aria-label="全螢幕 Fullscreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>全螢幕</button>
+      </div>
+    </div>
+    <nav class="chapters" id="chapters" aria-label="章節 Chapters"><h2>章節 CHAPTERS</h2></nav>
+  </div>
+
+  <section>
+    <h2 class="sec">角色介紹 Characters</h2>
+    <p class="lead">動畫裡的每個角色都對應真實的免疫細胞或分子。點一下卡片，就會跳到它登場的段落。<br>Every character is a real immune cell or molecule. Tap a card to jump to its scene.</p>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section>
+    <h2 class="sec">旁白腳本 Narration Script</h2>
+    <p class="lead">每一句都附英文翻譯。點時間碼可跳到該句。<br>Each line has an English translation. Tap a timecode to jump there.</p>
+    <div class="script" id="script"></div>
+  </section>
+
+  <footer>
+    <span>本動畫為衛教科普用途，不能取代專業醫療建議。有疑問請請教醫師或藥師。</span>
+    <span>For health education only; not a substitute for professional medical advice. All illustrations, animation and music are original and generated in code.</span>
+  </footer>
+</div>
+
+<audio id="au" src="audio/mix.m4a" preload="auto"></audio>
+<script src="anim.js"></script>
+<script>
+(async function () {
+  const A = window.VaxAnim;
+  const tl = await (await fetch('timeline.json')).json();
+  const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  const au = document.getElementById('au');
+  const $ = id => document.getElementById(id);
+  const fmt = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
+  const D = tl.duration;
+  let subs = 'both', playing = false, clockT = 0, clockStart = 0, audioOk = true, lastCh = -1;
+  try { const s = localStorage.getItem('vax-subs'); if (s) subs = s; } catch (e) {}
+  au.addEventListener('error', () => { audioOk = false; });
+
+  const now = () => playing ? (audioOk ? au.currentTime : clockT + (performance.now() - clockStart) / 1000) : (audioOk ? au.currentTime : clockT);
+  function seek(t) {
+    t = Math.max(0, Math.min(D - 0.01, t));
+    if (audioOk) { try { au.currentTime = t; } catch (e) {} }
+    clockT = t; clockStart = performance.now();
+    draw(t);
+  }
+  function play() {
+    if (now() >= D - 0.05) seek(0);
+    playing = true; clockT = now(); clockStart = performance.now();
+    if (audioOk) au.play().catch(() => { audioOk = false; });
+    $('bigPlay').hidden = true; setBtn();
+  }
+  function pause() { clockT = now(); playing = false; if (audioOk) au.pause(); setBtn(); }
+  const toggle = () => (playing ? pause() : play());
+  function setBtn() {
+    $('playBtn').innerHTML = playing
+      ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>暫停'
+      : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg>播放';
+    $('playBtn').setAttribute('aria-label', playing ? '暫停 Pause' : '播放 Play');
+  }
+  au.addEventListener('ended', () => { playing = false; setBtn(); });
+
+  // seek bar with chapter segments
+  const seekEl = $('seek'), fills = [];
+  tl.chapters.forEach(c => {
+    const s = document.createElement('div'); s.className = 'seg'; s.style.flex = String(c.end - c.start);
+    const i = document.createElement('i'); s.appendChild(i); seekEl.appendChild(s); fills.push(i);
+    s.title = c.zh + ' ' + c.en;
+  });
+  const head = document.createElement('div'); head.className = 'head'; seekEl.appendChild(head);
+  const posToT = x => { const r = seekEl.getBoundingClientRect(); return ((x - r.left) / r.width) * D; };
+  let dragging = false;
+  seekEl.addEventListener('pointerdown', e => { dragging = true; seekEl.setPointerCapture(e.pointerId); seek(posToT(e.clientX)); });
+  seekEl.addEventListener('pointermove', e => { if (dragging) seek(posToT(e.clientX)); });
+  seekEl.addEventListener('pointerup', () => { dragging = false; });
+  seekEl.addEventListener('keydown', e => { if (e.key === 'ArrowRight') seek(now() + 5); if (e.key === 'ArrowLeft') seek(now() - 5); });
+
+  // chapters
+  const chBtns = tl.chapters.map((c, i) => {
+    const b = document.createElement('button'); b.className = 'ch'; b.id = 'ch-' + c.id;
+    b.innerHTML = `<span class="n">${String(i + 1).padStart(2, '0')}</span><span class="t"><b>${c.zh}</b><span>${c.en}</span></span><span class="ts">${fmt(c.start)}</span>`;
+    b.addEventListener('click', () => { seek(c.start + 0.01); if (!playing) play(); });
+    $('chapters').appendChild(b); return b;
+  });
+
+  // subtitles
+  const subBtns = [...$('subs').querySelectorAll('button')];
+  function setSubs(m) { subs = m; subBtns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === m))); try { localStorage.setItem('vax-subs', m); } catch (e) {} draw(now()); }
+  subBtns.forEach(b => b.addEventListener('click', () => setSubs(b.dataset.m)));
+  setSubs(subs);
+
+  $('playBtn').addEventListener('click', toggle);
+  $('bigPlay').addEventListener('click', play);
+  cv.addEventListener('click', toggle);
+  $('fsBtn').addEventListener('click', () => { const st = document.querySelector('.stage'); (st.requestFullscreen ? st.requestFullscreen() : Promise.reject()).catch(() => {}); });
+  document.addEventListener('keydown', e => {
+    if (e.target.closest('input, textarea')) return;
+    if (e.code === 'Space') { e.preventDefault(); toggle(); }
+  });
+
+
+  function draw(t) {
+    A.render(ctx, t, tl, { subs });
+    const ci = A.chapterAt(tl, t);
+    tl.chapters.forEach((c, i) => { fills[i].style.width = (Math.max(0, Math.min(1, (t - c.start) / (c.end - c.start))) * 100) + '%'; });
+    head.style.left = (t / D * 100) + '%';
+    seekEl.setAttribute('aria-valuenow', String(Math.round(t / D * 100)));
+    $('time').textContent = fmt(t) + ' / ' + fmt(D);
+    if (ci !== lastCh) { chBtns.forEach((b, i) => b.setAttribute('aria-current', String(i === ci))); lastCh = ci; }
+  }
+  function loop() {
+    let t = now();
+    if (playing && !audioOk && t >= D) { playing = false; clockT = D - 0.01; setBtn(); t = D - 0.01; }
+    if (playing || dragging) draw(Math.min(t, D - 0.01));
+    requestAnimationFrame(loop);
+  }
+  setBtn();
+  try { await document.fonts.load('700 40px "Noto Sans TC"'); await document.fonts.load('900 40px "Noto Sans TC"'); } catch (e) {}
+  draw(7.2); clockT = 0;
+  if (audioOk) { try { au.currentTime = 0; } catch (e) {} }
+  requestAnimationFrame(loop);
+
+  // character cards
+  const Dr = A.Draw, C = A.C;
+  const chars = [
+    { k: 'virus', zh: '病毒', en: 'Virus', c: C.virus, ch: 1, d: '會入侵細胞、利用細胞複製自己的病原體。', de: 'A pathogen that invades cells and uses them to copy itself.', f: (x, t) => Dr.virus(x, 160, 100, 44, t) },
+    { k: 'antigen', zh: '抗原', en: 'Antigen', c: C.spike, ch: 1, d: '病原體表面的獨特分子，是免疫系統辨認敵人的依據。', de: 'A unique molecule on a pathogen that the immune system recognizes.', f: (x, t) => Dr.spikeProtein(x, 160, 108, 56, t) },
+    { k: 'vaccine', zh: '疫苗（mRNA 型）', en: 'Vaccine (mRNA type)', c: C.vaccine, ch: 2, d: '脂質奈米顆粒包著 mRNA 指令，讓細胞暫時做出抗原蛋白。', de: 'A lipid nanoparticle carrying mRNA that lets cells briefly make the antigen protein.', f: (x, t) => Dr.lnp(x, 160, 100, 52, t) },
+    { k: 'dendritic', zh: '樹突細胞', en: 'Dendritic cell', c: C.dendritic, ch: 3, d: '免疫系統的偵察兵，吞下抗原後展示給T細胞看。', de: 'The scout: it takes up antigens and presents them to T cells.', f: (x, t) => Dr.dendritic(x, 160, 100, 34, t) },
+    { k: 'helper', zh: '輔助型T細胞', en: 'Helper T cell', c: C.helper, ch: 3, d: '指揮官，接到警報後啟動B細胞與殺手T細胞。', de: 'The coordinator that activates B cells and killer T cells.', f: (x, t) => Dr.helperT(x, 160, 100, 44, t) },
+    { k: 'bcell', zh: 'B細胞', en: 'B cell', c: C.bcell, ch: 4, d: '表面帶有抗體受器，被活化後大量增殖。', de: 'Carries antibody receptors and multiplies when activated.', f: (x, t) => Dr.bcell(x, 160, 100, 44, t) },
+    { k: 'plasma', zh: '漿細胞', en: 'Plasma cell', c: C.plasma, ch: 4, d: '由B細胞變成的抗體工廠，每秒可釋出大量抗體。', de: 'An antibody factory that develops from a B cell.', f: (x, t) => Dr.plasma(x, 160, 100, 42, t) },
+    { k: 'antibody', zh: '抗體', en: 'Antibody', c: C.antibody, ch: 4, d: 'Y 字形蛋白質，黏住病原體、阻止入侵並標記清除。', de: 'A Y-shaped protein that binds pathogens, blocks entry and tags them.', f: (x, t) => Dr.antibody(x, 160, 100, 56, Math.sin(t) * 0.25) },
+    { k: 'macro', zh: '巨噬細胞', en: 'Macrophage', c: C.macro, ch: 4, d: '清道夫，吞噬被抗體標記的病原體。', de: 'The cleaner that swallows antibody-tagged pathogens.', f: (x, t) => Dr.macrophage(x, 160, 100, 46, t) },
+    { k: 'killer', zh: '殺手T細胞', en: 'Killer T cell', c: C.killer, ch: 5, d: '辨認並清除已被感染的細胞，阻止病毒複製。', de: 'Finds and removes infected cells so the virus cannot spread.', f: (x, t) => Dr.killerT(x, 160, 100, 44, t) },
+    { k: 'infected', zh: '受感染細胞', en: 'Infected cell', c: C.virus, ch: 5, d: '被病毒入侵、正在製造新病毒的人體細胞。', de: 'A body cell that a virus has taken over to make new viruses.', f: (x, t) => Dr.hostCell(x, 160, 100, 62, t, { infected: 1 }) },
+    { k: 'memory', zh: '記憶細胞', en: 'Memory cell', c: C.memory, ch: 6, d: '長壽的B或T細胞，記住敵人，下次反應更快更強。', de: 'A long-lived B or T cell that remembers the enemy and responds faster next time.', f: (x, t) => Dr.memory(x, 160, 100, 40, t) }
+  ];
+  const cardCanvases = [];
+  chars.forEach(ch => {
+    const b = document.createElement('button'); b.className = 'card'; b.id = 'card-' + ch.k; b.style.setProperty('--c', ch.c);
+    const c = document.createElement('canvas'); c.width = 320; c.height = 200;
+    const st = tl.chapters[ch.ch];
+    b.innerHTML = `<div class="body"><div class="name"><b>${ch.zh}</b><span>${ch.en}</span></div><p>${ch.d}</p><p class="en">${ch.de}</p><span class="jump">▶ ${String(ch.ch + 1).padStart(2, '0')} ${st.zh} · ${fmt(st.start)}</span></div>`;
+    b.prepend(c);
+    b.addEventListener('click', () => { seek(st.start + 0.01); document.querySelector('.stage').scrollIntoView({ behavior: 'smooth', block: 'center' }); if (!playing) play(); });
+    $('cards').appendChild(b); cardCanvases.push([c.getContext('2d'), ch]);
+  });
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function drawCards(ts) {
+    const t = reduce ? 1 : ts / 1000;
+    cardCanvases.forEach(([g, ch]) => { g.clearRect(0, 0, 320, 200); ch.f(g, t); });
+    if (!reduce) requestAnimationFrame(drawCards);
+  }
+  requestAnimationFrame(drawCards);
+
+  // script
+  tl.chapters.forEach((c, i) => {
+    const d = document.createElement('details'); d.className = 'sc'; if (i < 2) d.open = true;
+    d.innerHTML = `<summary><span class="ts">${String(i + 1).padStart(2, '0')} · ${fmt(c.start)}</span>${c.zh}<span class="en">${c.en}</span></summary>`;
+    tl.cues.filter(q => q.ch === i).forEach(q => {
+      const l = document.createElement('div'); l.className = 'line';
+      l.innerHTML = `<button class="ts">${fmt(q.start)}</button><div><span class="zh">${q.zh}</span><span class="en">${q.en}</span></div>`;
+      l.querySelector('button').addEventListener('click', () => { seek(q.start); document.querySelector('.stage').scrollIntoView({ behavior: 'smooth', block: 'center' }); if (!playing) play(); });
+      d.appendChild(l);
+    });
+    $('script').appendChild(d);
+  });
+})();
+</script>
+</body>
+</html>

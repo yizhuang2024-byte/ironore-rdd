@@ -1,0 +1,303 @@
+{
+ "title": {
+  "zh": "疫苗怎麼作用？",
+  "en": "How Do Vaccines Work?"
+ },
+ "duration": 97.245,
+ "chapters": [
+  {
+   "id": "intro",
+   "zh": "序幕",
+   "en": "Prologue",
+   "start": 0.0,
+   "end": 9.187
+  },
+  {
+   "id": "antigen",
+   "zh": "病原體與抗原",
+   "en": "Pathogens & Antigens",
+   "start": 9.187,
+   "end": 17.878
+  },
+  {
+   "id": "vaccine",
+   "zh": "疫苗是什麼",
+   "en": "What Is a Vaccine",
+   "start": 17.878,
+   "end": 28.555
+  },
+  {
+   "id": "alarm",
+   "zh": "拉響警報",
+   "en": "Sounding the Alarm",
+   "start": 28.555,
+   "end": 36.174
+  },
+  {
+   "id": "antibody",
+   "zh": "B細胞與抗體",
+   "en": "B Cells & Antibodies",
+   "start": 36.174,
+   "end": 48.568
+  },
+  {
+   "id": "killer",
+   "zh": "殺手T細胞",
+   "en": "Killer T Cells",
+   "start": 48.568,
+   "end": 56.174
+  },
+  {
+   "id": "memory",
+   "zh": "記憶細胞",
+   "en": "Memory Cells",
+   "start": 56.174,
+   "end": 63.934
+  },
+  {
+   "id": "infection",
+   "zh": "真正的入侵",
+   "en": "The Real Invasion",
+   "start": 63.934,
+   "end": 73.597
+  },
+  {
+   "id": "herd",
+   "zh": "副作用與群體免疫",
+   "en": "Side Effects & Herd Immunity",
+   "start": 73.597,
+   "end": 86.151
+  },
+  {
+   "id": "outro",
+   "zh": "結語",
+   "en": "Takeaway",
+   "start": 86.151,
+   "end": 97.245
+  }
+ ],
+ "cues": [
+  {
+   "ch": 0,
+   "start": 1.5,
+   "end": 2.585,
+   "zh": "你有沒有想過，",
+   "en": "Have you ever wondered"
+  },
+  {
+   "ch": 0,
+   "start": 2.825,
+   "end": 5.727,
+   "zh": "打完疫苗之後，身體裡發生了什麼事？",
+   "en": "what happens inside your body after a vaccine?"
+  },
+  {
+   "ch": 0,
+   "start": 6.147,
+   "end": 8.737,
+   "zh": "今天，一起走進免疫系統的世界。",
+   "en": "Today, let's step into the world of the immune system."
+  },
+  {
+   "ch": 1,
+   "start": 9.637,
+   "end": 11.55,
+   "zh": "病毒和細菌這類病原體，",
+   "en": "Pathogens such as viruses and bacteria"
+  },
+  {
+   "ch": 1,
+   "start": 11.79,
+   "end": 14.533,
+   "zh": "表面帶有獨特的分子，叫做「抗原」。",
+   "en": "carry unique surface molecules called antigens."
+  },
+  {
+   "ch": 1,
+   "start": 14.953,
+   "end": 17.428,
+   "zh": "免疫系統就是靠抗原來辨認敵人。",
+   "en": "The immune system recognizes invaders by their antigens."
+  },
+  {
+   "ch": 2,
+   "start": 18.328,
+   "end": 20.712,
+   "zh": "疫苗用減毒或不活化的病原體，",
+   "en": "A vaccine uses a weakened or inactivated pathogen,"
+  },
+  {
+   "ch": 2,
+   "start": 20.952,
+   "end": 24.8,
+   "zh": "或只用它的一小部分，像蛋白質或 mRNA，",
+   "en": "or just a piece of it, such as a protein or mRNA,"
+  },
+  {
+   "ch": 2,
+   "start": 25.04,
+   "end": 28.105,
+   "zh": "讓身體認識敵人，一般不會引發疾病。",
+   "en": "to introduce the enemy, generally without causing the disease."
+  },
+  {
+   "ch": 3,
+   "start": 29.005,
+   "end": 31.51,
+   "zh": "接種後，樹突細胞會吞下抗原，",
+   "en": "After the shot, dendritic cells take up the antigen"
+  },
+  {
+   "ch": 3,
+   "start": 31.75,
+   "end": 33.94,
+   "zh": "把它展示給輔助型T細胞，",
+   "en": "and present it to helper T cells,"
+  },
+  {
+   "ch": 3,
+   "start": 34.18,
+   "end": 35.724,
+   "zh": "啟動整個免疫反應。",
+   "en": "launching the whole immune response."
+  },
+  {
+   "ch": 4,
+   "start": 36.624,
+   "end": 39.218,
+   "zh": "被活化的B細胞會大量增殖，",
+   "en": "Activated B cells multiply rapidly"
+  },
+  {
+   "ch": 4,
+   "start": 39.458,
+   "end": 41.487,
+   "zh": "變成製造抗體的漿細胞。",
+   "en": "and become antibody-making plasma cells."
+  },
+  {
+   "ch": 4,
+   "start": 41.907,
+   "end": 45.098,
+   "zh": "抗體能黏住病原體，阻止它入侵細胞，",
+   "en": "Antibodies latch onto pathogens, blocking them from entering cells,"
+  },
+  {
+   "ch": 4,
+   "start": 45.338,
+   "end": 48.118,
+   "zh": "並標記它，讓其他免疫細胞清除。",
+   "en": "and tag them for other immune cells to clear."
+  },
+  {
+   "ch": 5,
+   "start": 49.018,
+   "end": 52.587,
+   "zh": "同時，殺手T細胞學會辨認被感染的細胞，",
+   "en": "Meanwhile, killer T cells learn to spot infected cells"
+  },
+  {
+   "ch": 5,
+   "start": 52.827,
+   "end": 55.724,
+   "zh": "並把它們清除，阻止病毒繼續複製。",
+   "en": "and eliminate them, stopping the virus from copying itself."
+  },
+  {
+   "ch": 6,
+   "start": 56.624,
+   "end": 59.516,
+   "zh": "最關鍵的是，一部分B細胞和T細胞",
+   "en": "Most importantly, some B and T cells"
+  },
+  {
+   "ch": 6,
+   "start": 59.756,
+   "end": 61.628,
+   "zh": "會變成長壽的記憶細胞，",
+   "en": "become long-lived memory cells"
+  },
+  {
+   "ch": 6,
+   "start": 61.868,
+   "end": 63.484,
+   "zh": "把敵人的樣子記下來。",
+   "en": "that remember what the enemy looks like."
+  },
+  {
+   "ch": 7,
+   "start": 64.384,
+   "end": 66.571,
+   "zh": "日後真正的病原體入侵時，",
+   "en": "When the real pathogen invades later,"
+  },
+  {
+   "ch": 7,
+   "start": 66.811,
+   "end": 69.327,
+   "zh": "記憶細胞能更快、更強地反應，",
+   "en": "memory cells respond faster and stronger,"
+  },
+  {
+   "ch": 7,
+   "start": 69.567,
+   "end": 73.147,
+   "zh": "常在發病前就控制住感染，或讓症狀減輕。",
+   "en": "often stopping infection before illness, or making it milder."
+  },
+  {
+   "ch": 8,
+   "start": 74.047,
+   "end": 76.413,
+   "zh": "打針後手臂痠痛或輕微發燒，",
+   "en": "A sore arm or mild fever afterward"
+  },
+  {
+   "ch": 8,
+   "start": 76.653,
+   "end": 80.303,
+   "zh": "常是免疫系統在工作，通常幾天內就會消退。",
+   "en": "often means the immune system is working, and usually fades in days."
+  },
+  {
+   "ch": 8,
+   "start": 80.723,
+   "end": 83.684,
+   "zh": "當夠多人接種，病原體就難以傳播，",
+   "en": "When enough people are vaccinated, pathogens struggle to spread,"
+  },
+  {
+   "ch": 8,
+   "start": 83.924,
+   "end": 85.701,
+   "zh": "也能保護無法接種的人。",
+   "en": "which also protects those who can't be vaccinated."
+  },
+  {
+   "ch": 9,
+   "start": 86.601,
+   "end": 88.66,
+   "zh": "疫苗不是百分之百的保證，",
+   "en": "Vaccines aren't a 100% guarantee,"
+  },
+  {
+   "ch": 9,
+   "start": 88.9,
+   "end": 91.667,
+   "zh": "卻是訓練免疫系統最安全的方法之一。",
+   "en": "but they're one of the safest ways to train your immune system."
+  },
+  {
+   "ch": 9,
+   "start": 92.087,
+   "end": 94.445,
+   "zh": "有疑問，記得請教醫師或藥師。",
+   "en": "If you have questions, ask your doctor or pharmacist."
+  }
+ ],
+ "voice": {
+  "engine": "kokoro",
+  "sid": 3,
+  "speed": 1.2
+ }
+}

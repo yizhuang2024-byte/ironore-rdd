@@ -1,0 +1,203 @@
+{
+  "title": {
+    "zh": "疫苗怎麼作用？",
+    "en": "How Do Vaccines Work?"
+  },
+  "audience": "一般大眾 General public",
+  "chapters": [
+    {
+      "id": "intro",
+      "zh": "序幕",
+      "en": "Prologue",
+      "cues": [
+        {
+          "zh": "你有沒有想過，",
+          "en": "Have you ever wondered"
+        },
+        {
+          "zh": "打完疫苗之後，身體裡發生了什麼事？",
+          "en": "what happens inside your body after a vaccine?"
+        },
+        {
+          "zh": "今天，一起走進免疫系統的世界。",
+          "en": "Today, let's step into the world of the immune system."
+        }
+      ]
+    },
+    {
+      "id": "antigen",
+      "zh": "病原體與抗原",
+      "en": "Pathogens & Antigens",
+      "cues": [
+        {
+          "zh": "病毒和細菌這類病原體，",
+          "en": "Pathogens such as viruses and bacteria"
+        },
+        {
+          "zh": "表面帶有獨特的分子，叫做「抗原」。",
+          "en": "carry unique surface molecules called antigens."
+        },
+        {
+          "zh": "免疫系統就是靠抗原來辨認敵人。",
+          "en": "The immune system recognizes invaders by their antigens."
+        }
+      ]
+    },
+    {
+      "id": "vaccine",
+      "zh": "疫苗是什麼",
+      "en": "What Is a Vaccine",
+      "cues": [
+        {
+          "zh": "疫苗用減毒或不活化的病原體，",
+          "en": "A vaccine uses a weakened or inactivated pathogen,"
+        },
+        {
+          "zh": "或只用它的一小部分，像蛋白質或 mRNA，",
+          "en": "or just a piece of it, such as a protein or mRNA,"
+        },
+        {
+          "zh": "讓身體認識敵人，一般不會引發疾病。",
+          "en": "to introduce the enemy, generally without causing the disease."
+        }
+      ]
+    },
+    {
+      "id": "alarm",
+      "zh": "拉響警報",
+      "en": "Sounding the Alarm",
+      "cues": [
+        {
+          "zh": "接種後，樹突細胞會吞下抗原，",
+          "en": "After the shot, dendritic cells take up the antigen"
+        },
+        {
+          "zh": "把它展示給輔助型T細胞，",
+          "en": "and present it to helper T cells,"
+        },
+        {
+          "zh": "啟動整個免疫反應。",
+          "en": "launching the whole immune response."
+        }
+      ]
+    },
+    {
+      "id": "antibody",
+      "zh": "B細胞與抗體",
+      "en": "B Cells & Antibodies",
+      "cues": [
+        {
+          "zh": "被活化的B細胞會大量增殖，",
+          "en": "Activated B cells multiply rapidly"
+        },
+        {
+          "zh": "變成製造抗體的漿細胞。",
+          "en": "and become antibody-making plasma cells."
+        },
+        {
+          "zh": "抗體能黏住病原體，阻止它入侵細胞，",
+          "en": "Antibodies latch onto pathogens, blocking them from entering cells,"
+        },
+        {
+          "zh": "並標記它，讓其他免疫細胞清除。",
+          "en": "and tag them for other immune cells to clear."
+        }
+      ]
+    },
+    {
+      "id": "killer",
+      "zh": "殺手T細胞",
+      "en": "Killer T Cells",
+      "cues": [
+        {
+          "zh": "同時，殺手T細胞學會辨認被感染的細胞，",
+          "en": "Meanwhile, killer T cells learn to spot infected cells"
+        },
+        {
+          "zh": "並把它們清除，阻止病毒繼續複製。",
+          "en": "and eliminate them, stopping the virus from copying itself."
+        }
+      ]
+    },
+    {
+      "id": "memory",
+      "zh": "記憶細胞",
+      "en": "Memory Cells",
+      "cues": [
+        {
+          "zh": "最關鍵的是，一部分B細胞和T細胞",
+          "en": "Most importantly, some B and T cells"
+        },
+        {
+          "zh": "會變成長壽的記憶細胞，",
+          "en": "become long-lived memory cells"
+        },
+        {
+          "zh": "把敵人的樣子記下來。",
+          "en": "that remember what the enemy looks like."
+        }
+      ]
+    },
+    {
+      "id": "infection",
+      "zh": "真正的入侵",
+      "en": "The Real Invasion",
+      "cues": [
+        {
+          "zh": "日後真正的病原體入侵時，",
+          "en": "When the real pathogen invades later,"
+        },
+        {
+          "zh": "記憶細胞能更快、更強地反應，",
+          "en": "memory cells respond faster and stronger,"
+        },
+        {
+          "zh": "常在發病前就控制住感染，或讓症狀減輕。",
+          "en": "often stopping infection before illness, or making it milder."
+        }
+      ]
+    },
+    {
+      "id": "herd",
+      "zh": "副作用與群體免疫",
+      "en": "Side Effects & Herd Immunity",
+      "cues": [
+        {
+          "zh": "打針後手臂痠痛或輕微發燒，",
+          "en": "A sore arm or mild fever afterward"
+        },
+        {
+          "zh": "常是免疫系統在工作，通常幾天內就會消退。",
+          "en": "often means the immune system is working, and usually fades in days."
+        },
+        {
+          "zh": "當夠多人接種，病原體就難以傳播，",
+          "en": "When enough people are vaccinated, pathogens struggle to spread,"
+        },
+        {
+          "zh": "也能保護無法接種的人。",
+          "en": "which also protects those who can't be vaccinated."
+        }
+      ]
+    },
+    {
+      "id": "outro",
+      "zh": "結語",
+      "en": "Takeaway",
+      "cues": [
+        {
+          "zh": "疫苗不是百分之百的保證，",
+          "en": "Vaccines aren't a 100% guarantee,"
+        },
+        {
+          "zh": "卻是訓練免疫系統最安全的方法之一。",
+          "en": "but they're one of the safest ways to train your immune system."
+        },
+        {
+          "zh": "有疑問，記得請教醫師或藥師。",
+          "en": "If you have questions, ask your doctor or pharmacist."
+        }
+      ]
+    }
+  ]
+}
