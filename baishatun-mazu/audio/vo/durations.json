@@ -1,0 +1,170 @@
+[
+ {
+  "n": 0,
+  "scene": "s01_coast",
+  "file": "vo/00.wav",
+  "dur": 5.333,
+  "sr": 24000,
+  "len": 24
+ },
+ {
+  "n": 1,
+  "scene": "s01_coast",
+  "file": "vo/01.wav",
+  "dur": 4.927291666666667,
+  "sr": 24000,
+  "len": 23
+ },
+ {
+  "n": 2,
+  "scene": "s03_jiao",
+  "file": "vo/02.wav",
+  "dur": 5.003625,
+  "sr": 24000,
+  "len": 24
+ },
+ {
+  "n": 3,
+  "scene": "s03_jiao",
+  "file": "vo/03.wav",
+  "dur": 4.344333333333333,
+  "sr": 24000,
+  "len": 21
+ },
+ {
+  "n": 4,
+  "scene": "s04_depart",
+  "file": "vo/04.wav",
+  "dur": 5.1626666666666665,
+  "sr": 24000,
+  "len": 22
+ },
+ {
+  "n": 5,
+  "scene": "s04_depart",
+  "file": "vo/05.wav",
+  "dur": 4.45525,
+  "sr": 24000,
+  "len": 20
+ },
+ {
+  "n": 6,
+  "scene": "s05_route",
+  "file": "vo/06.wav",
+  "dur": 5.109666666666667,
+  "sr": 24000,
+  "len": 23
+ },
+ {
+  "n": 7,
+  "scene": "s05_route",
+  "file": "vo/07.wav",
+  "dur": 5.342666666666666,
+  "sr": 24000,
+  "len": 24
+ },
+ {
+  "n": 8,
+  "scene": "s06_pink",
+  "file": "vo/08.wav",
+  "dur": 5.2439583333333335,
+  "sr": 24000,
+  "len": 25
+ },
+ {
+  "n": 9,
+  "scene": "s06_pink",
+  "file": "vo/09.wav",
+  "dur": 4.578875,
+  "sr": 24000,
+  "len": 21
+ },
+ {
+  "n": 10,
+  "scene": "s07_river",
+  "file": "vo/10.wav",
+  "dur": 5.804666666666667,
+  "sr": 24000,
+  "len": 26
+ },
+ {
+  "n": 11,
+  "scene": "s08_village",
+  "file": "vo/11.wav",
+  "dur": 4.682291666666667,
+  "sr": 24000,
+  "len": 22
+ },
+ {
+  "n": 12,
+  "scene": "s08_village",
+  "file": "vo/12.wav",
+  "dur": 5.17825,
+  "sr": 24000,
+  "len": 22
+ },
+ {
+  "n": 13,
+  "scene": "s09_beigang",
+  "file": "vo/13.wav",
+  "dur": 4.104875,
+  "sr": 24000,
+  "len": 22
+ },
+ {
+  "n": 14,
+  "scene": "s09_beigang",
+  "file": "vo/14.wav",
+  "dur": 4.593833333333333,
+  "sr": 24000,
+  "len": 22
+ },
+ {
+  "n": 15,
+  "scene": "s10_return",
+  "file": "vo/15.wav",
+  "dur": 5.193083333333333,
+  "sr": 24000,
+  "len": 23
+ },
+ {
+  "n": 16,
+  "scene": "s10_return",
+  "file": "vo/16.wav",
+  "dur": 4.462625,
+  "sr": 24000,
+  "len": 22
+ },
+ {
+  "n": 17,
+  "scene": "s11_closing",
+  "file": "vo/17.wav",
+  "dur": 5.149625,
+  "sr": 24000,
+  "len": 25
+ },
+ {
+  "n": 18,
+  "scene": "s11_closing",
+  "file": "vo/18.wav",
+  "dur": 3.64825,
+  "sr": 24000,
+  "len": 18
+ },
+ {
+  "n": 19,
+  "scene": "s11_closing",
+  "file": "vo/19.wav",
+  "dur": 4.4602916666666665,
+  "sr": 24000,
+  "len": 22
+ },
+ {
+  "n": 20,
+  "scene": "s11_closing",
+  "file": "vo/20.wav",
+  "dur": 4.850291666666666,
+  "sr": 24000,
+  "len": 23
+ }
+]

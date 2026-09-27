@@ -1,0 +1,211 @@
+{
+  "title_zh": "白沙屯媽祖進香",
+  "title_en": "The Baishatun Mazu Pilgrimage",
+  "scenes": [
+    {
+      "id": "s01_coast",
+      "night": false,
+      "lines": [
+        {
+          "zh": "苗栗通霄的海邊，有一座面海的小廟：白沙屯拱天宮。",
+          "en": "On the coast of Tongxiao, Miaoli, stands a seaside temple: Baishatun Gongtian Temple."
+        },
+        {
+          "zh": "每年春天，這裡的媽祖要徒步南下，前往北港進香。",
+          "en": "Every spring, its Mazu sets out on foot, south to Beigang, on pilgrimage."
+        }
+      ]
+    },
+    {
+      "id": "s02_title",
+      "night": false,
+      "lines": []
+    },
+    {
+      "id": "s03_jiao",
+      "night": false,
+      "lines": [
+        {
+          "zh": "出發的日子不由人決定，而是在神前擲筊，請示媽祖。",
+          "en": "The departure date is not set by people, but asked of Mazu by casting moon blocks.",
+          "tts": "出發的日子不由人決定，而是在神前擲腳，請示媽祖。"
+        },
+        {
+          "zh": "筊杯一聲聲落地，進香的日期與時辰就此定下。",
+          "en": "As the blocks clatter to the floor, the day and hour of the pilgrimage are fixed.",
+          "tts": "腳杯一聲聲落地，進香的日期與時辰就此定下。"
+        }
+      ]
+    },
+    {
+      "id": "s04_depart",
+      "night": true,
+      "lines": [
+        {
+          "zh": "深夜時分，媽祖登轎，神轎在鞭炮聲中走出廟門。",
+          "en": "Late at night, Mazu mounts her palanquin, which leaves the temple amid firecrackers."
+        },
+        {
+          "zh": "頭旗在前開路，成千上萬的香燈腳緊緊跟隨。",
+          "en": "The lead banner clears the way, and tens of thousands of pilgrims follow close behind."
+        }
+      ]
+    },
+    {
+      "id": "s05_route",
+      "night": false,
+      "lines": [
+        {
+          "zh": "這趟進香沒有固定路線，往哪裡走，全憑媽祖指引。",
+          "en": "There is no fixed route. Where to go is left entirely to Mazu's guidance."
+        },
+        {
+          "zh": "來回約三、四百公里，走過苗栗、臺中、彰化與雲林。",
+          "en": "The round trip, some 300 to 400 km, crosses Miaoli, Taichung, Changhua and Yunlin."
+        }
+      ]
+    },
+    {
+      "id": "s06_pink",
+      "night": false,
+      "lines": [
+        {
+          "zh": "神轎覆著粉紅色遮雨布，走得又快，人稱「粉紅超跑」。",
+          "en": "Draped in a pink rain cover and moving fast, the palanquin is nicknamed the \"Pink Supercar\".",
+          "tts": "神轎蓋上粉紅色遮雨布，走得又快，人稱粉紅超跑。"
+        },
+        {
+          "zh": "四人扛的小轎輕巧靈活，時而大步，時而小跑。",
+          "en": "Carried by four, the light sedan is nimble: striding one moment, jogging the next."
+        }
+      ]
+    },
+    {
+      "id": "s07_river",
+      "night": false,
+      "lines": [
+        {
+          "zh": "二〇〇一年，神轎曾突然轉向，帶領信徒涉水渡過濁水溪。",
+          "en": "In 2001, the palanquin suddenly turned and led followers wading across the Zhuoshui River.",
+          "tts": "二零零一年，神轎曾突然轉向，帶領信徒涉水渡過濁水溪。"
+        }
+      ]
+    },
+    {
+      "id": "s08_village",
+      "night": false,
+      "lines": [
+        {
+          "zh": "沿途居民擺出茶水點心，招待素不相識的香燈腳。",
+          "en": "Villagers along the way set out tea and snacks for pilgrims they have never met."
+        },
+        {
+          "zh": "信徒跪伏路旁，等待神轎從身上經過，祈求平安。",
+          "en": "Believers kneel by the road, waiting for the palanquin to pass over them, praying for peace."
+        }
+      ]
+    },
+    {
+      "id": "s09_beigang",
+      "night": false,
+      "lines": [
+        {
+          "zh": "抵達北港朝天宮後，舉行最神聖的「刈火」儀式。",
+          "en": "At Beigang's Chaotian Temple, the most sacred rite is held: gathering the fire.",
+          "tts": "抵達北港朝天宮後，舉行最神聖的，義火，儀式。"
+        },
+        {
+          "zh": "萬年香爐的香火被舀入火缸，封存後帶回白沙屯。",
+          "en": "Embers from the ancient censer are ladled into a fire urn, sealed, and carried home."
+        }
+      ]
+    },
+    {
+      "id": "s10_return",
+      "night": true,
+      "lines": [
+        {
+          "zh": "回程風雨兼程，沿路人家點起燈火，迎接媽祖回家。",
+          "en": "On the long road back, families light lamps along the way to welcome Mazu home."
+        },
+        {
+          "zh": "回宮那一刻，眾人高喊「進喔」，煙火照亮夜空。",
+          "en": "At the moment she re-enters the temple, the crowd cries \"Jin-oh!\" as fireworks light the sky.",
+          "tts": "回宮那一刻，眾人高喊，進喔！煙火照亮夜空。"
+        }
+      ]
+    },
+    {
+      "id": "s11_closing",
+      "night": false,
+      "lines": [
+        {
+          "zh": "這項傳統延續近兩百年，二〇一〇年列為國家重要民俗。",
+          "en": "Nearly two centuries old, the tradition became a National Important Folk Custom in 2010.",
+          "tts": "這項傳統延續近兩百年，二零一零年列為國家重要民俗。"
+        },
+        {
+          "zh": "二〇二六年，報名人數超過四十六萬人。",
+          "en": "In 2026, more than 460,000 people registered to walk.",
+          "tts": "二零二六年，報名人數超過四十六萬人。"
+        },
+        {
+          "zh": "從幾百人到數十萬人，走的是同一份虔誠與感恩。",
+          "en": "From a few hundred to hundreds of thousands, they walk with the same devotion and gratitude.",
+          "tts": "從幾百人到數十萬人，走的是同一份虔誠，與感恩。"
+        },
+        {
+          "zh": "媽祖走在前面，我們跟在後面，一步一步，走回家。",
+          "en": "Mazu walks ahead, and we follow behind, step by step, all the way home."
+        }
+      ]
+    },
+    {
+      "id": "s12_end",
+      "night": false,
+      "lines": []
+    }
+  ],
+  "sources": [
+    [
+      "臺灣宗教文化地圖－白沙屯媽祖進香（內政部）",
+      "https://taiwangods.moi.gov.tw/html/cultural/3_0011.aspx?i=75"
+    ],
+    [
+      "維基百科－白沙屯媽祖進香",
+      "https://zh.wikipedia.org/zh-tw/%E7%99%BD%E6%B2%99%E5%B1%AF%E5%AA%BD%E7%A5%96%E9%80%B2%E9%A6%99"
+    ],
+    [
+      "白沙屯媽祖婆網站－進香儀式",
+      "https://www.baishatun.com.tw/8-1.htm"
+    ],
+    [
+      "國家文化記憶庫－白沙屯媽祖鑾轎「粉紅超跑」",
+      "https://tcmb.culture.tw/zh-tw/detail?indexCode=Culture_Event&id=330802"
+    ],
+    [
+      "風傳媒－白沙屯媽祖為何叫粉紅超跑",
+      "https://www.storm.mg/article/4733116"
+    ],
+    [
+      "知新聞－粉紅超跑衝入濁水溪珍貴畫面",
+      "https://www.knews.com.tw/news/385EDA9B72EA3244C44BBC342C7ED509"
+    ],
+    [
+      "城市學（遠見）－2026白沙屯媽祖進香總整理",
+      "https://city.gvm.com.tw/article/128149"
+    ],
+    [
+      "遠見雜誌－2026白沙屯媽祖進香",
+      "https://www.gvm.com.tw/article/127855"
+    ],
+    [
+      "中時新聞網－白沙屯媽祖回拱天宮，信徒高喊「進喔」",
+      "https://www.chinatimes.com/realtimenews/20250511002314-260405"
+    ],
+    [
+      "天下雜誌－白沙屯媽祖進香如何變身全民運動",
+      "https://www.cw.com.tw/article/5140635"
+    ]
+  ]
+}

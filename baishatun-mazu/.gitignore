@@ -1,0 +1,3 @@
+out/seg/
+out/*.wav
+node_modules/

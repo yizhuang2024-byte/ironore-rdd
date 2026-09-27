@@ -1,0 +1,107 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="fonts/lxgwwenkaitc-regular.css">
+<link rel="stylesheet" href="fonts/lxgwwenkaitc-bold.css">
+<style>
+@font-face { font-family: 'EB Garamond'; font-style: italic; font-weight: 400; src: url('fonts/eb-garamond-latin-400-italic.woff2') format('woff2'); }
+@font-face { font-family: 'EB Garamond'; font-style: normal; font-weight: 400; src: url('fonts/eb-garamond-latin-500-normal.woff2') format('woff2'); }
+html, body { margin: 0; padding: 0; width: 1920px; height: 1080px; overflow: hidden; background: #f1e8d4; }
+#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+#paper { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; mix-blend-mode: multiply; pointer-events: none; }
+#sub { position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%); text-align: center;
+  background: rgba(34, 27, 22, 0.46); border-radius: 18px; padding: 14px 40px 16px; max-width: 1640px;
+  box-shadow: 0 0 28px 10px rgba(34, 27, 22, 0.22); opacity: 0; white-space: nowrap; }
+#sub .zh { font-family: 'LXGW WenKai TC'; font-weight: 700; font-size: 48px; line-height: 64px; color: #fbf4e2; letter-spacing: 2px; }
+#sub .en { font-family: 'EB Garamond'; font-style: italic; font-size: 34px; line-height: 44px; color: #efe4c8; }
+</style></head>
+<body>
+<svg id="stage" width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg"></svg>
+<img id="paper" src="paper.png">
+<div id="sub"><div class="zh"></div><div class="en"></div></div>
+<script src="lib.js"></script>
+<script src="scenes.js"></script>
+<script src="timeline.js"></script>
+<script>
+'use strict';
+const FPS = TL.fps;
+const SEEDS = [3, 17, 29, 41, 57];
+function defs() {
+  let d = '<defs>';
+  SEEDS.forEach((s, i) => {
+    d += `<filter id="jit${i}" filterUnits="userSpaceOnUse" x="-40" y="-40" width="2000" height="1160">
+      <feTurbulence type="fractalNoise" baseFrequency="0.022" numOctaves="2" seed="${s}" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3.6" xChannelSelector="R" yChannelSelector="G"/></filter>`;
+  });
+  d += `<filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
+  for (const [id, c] of [['hGlow', COL.glow], ['hPink', COL.pink], ['hRed', COL.red], ['hGold', COL.gold]])
+    d += `<radialGradient id="${id}"><stop offset="0" stop-color="${c}" stop-opacity="0.95"/>
+      <stop offset="0.35" stop-color="${c}" stop-opacity="0.38"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient>`;
+  return d + '</defs>';
+}
+const DEFS = defs();
+function camAt(sc, t) {
+  const def = SC[sc.id];
+  if (def.camFn) return def.camFn(t);
+  const k = def.cam;
+  if (t <= k[0][0]) return k[0].slice(1);
+  for (let i = 0; i < k.length - 1; i++) {
+    if (t <= k[i + 1][0]) {
+      const u = (t - k[i][0]) / (k[i + 1][0] - k[i][0]);
+      // gentle ease-in-out across the whole move
+      const e = u * u * (3 - 2 * u) * 0.5 + u * 0.5;
+      return [0, 1, 2].map(j => lerp(k[i][j + 1], k[i + 1][j + 1], e));
+    }
+  }
+  return k[k.length - 1].slice(1);
+}
+function sceneSvg(sc, t, frame) {
+  G.t = t; G.night = sc.night; G.frame = frame;
+  const [cx, cy, z] = camAt(sc, t);
+  const body = SC[sc.id].draw(t, sc.end - sc.start);
+  const bg = sc.night ? COL.night : COL.paper;
+  return `<rect x="0" y="0" width="1920" height="1080" fill="${bg}"/>` +
+    `<g filter="url(#jit${Math.floor(frame / 3) % SEEDS.length})"><g transform="translate(960,540) scale(${z.toFixed(4)}) translate(${(-cx).toFixed(2)},${(-cy).toFixed(2)})">${body}</g></g>`;
+}
+function render(frame) {
+  const t = frame / FPS;
+  let i = TL.scenes.findIndex(s => t >= s.start - 1e-6 && t < s.end - 1e-6);
+  if (i < 0) i = TL.scenes.length - 1;
+  const sc = TL.scenes[i], local = t - sc.start;
+  const FADE = 0.45;
+  const toEnd = sc.end - t;
+  let svg = DEFS;
+  const next = TL.scenes[i + 1];
+  if (toEnd < FADE) {
+    const a = Math.max(0, toEnd / FADE);
+    const nbg = next ? (next.night ? COL.night : COL.paper) : COL.paper;
+    svg += `<rect x="0" y="0" width="1920" height="1080" fill="${nbg}"/><g opacity="${a.toFixed(3)}">${sceneSvg(sc, local, frame)}</g>`;
+  } else svg += sceneSvg(sc, local, frame);
+  document.getElementById('stage').innerHTML = svg;
+  document.getElementById('paper').style.opacity = sc.night ? 0.55 : 1;
+  // subtitles
+  const sub = TL.subs.find(s => t >= s.start - 0.15 && t < s.end + 0.35);
+  const el = document.getElementById('sub');
+  if (sub) {
+    el.querySelector('.zh').textContent = sub.zh;
+    el.querySelector('.en').textContent = sub.en;
+    const a = Math.min(1, (t - (sub.start - 0.15)) / 0.2, (sub.end + 0.35 - t) / 0.2);
+    el.style.opacity = Math.max(0, a).toFixed(3);
+  } else el.style.opacity = 0;
+  return { scene: sc.id, local };
+}
+async function ready() {
+  const txt = TL.subs.map(s => s.zh + s.en).join('') + '白沙屯媽祖進香苗栗通霄雲林北港拱天宮朝天宮天公爐天上聖母聖筊大安溪大甲溪大肚溪濁水溪臺中彰化西螺大橋奉茶萬年香火火封刈進喔！感謝收看畫面旁白配樂資料來源內政部臺灣宗教文化地圖白沙屯媽祖婆網站國家文化記憶庫維基百科遠見天下風傳媒知新聞中時新聞網向量程式繪製手繪線稿風格中文男聲離線合成原創古箏笛子鑼鼓⟶·：Thank you';
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:absolute;left:-5000px;top:0';
+  probe.innerHTML = `<span style="font-family:'LXGW WenKai TC';font-weight:400">${txt}</span><span style="font-family:'LXGW WenKai TC';font-weight:700">${txt}</span><span style="font-family:'EB Garamond';font-style:italic">${txt}</span><span style="font-family:'EB Garamond'">${txt}</span>`;
+  document.body.appendChild(probe);
+  await document.fonts.ready;
+  await Promise.all([...document.fonts].filter(f => f.status === 'loading').map(f => f.loaded.catch(() => {})));
+  const img = document.getElementById('paper');
+  if (!img.complete) await new Promise(r => img.onload = r);
+  probe.remove();
+  return [...document.fonts].filter(f => f.status === 'loaded').length;
+}
+</script>
+</body></html>
