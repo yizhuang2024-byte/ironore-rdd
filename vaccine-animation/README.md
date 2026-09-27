@@ -8,16 +8,17 @@
 | 互動網頁（播放、字幕切換、章節跳轉、角色卡片、旁白腳本） | `index.html` |
 | 可下載影片（1920×1080、30fps、H.264 + AAC、字幕燒錄） | `dist/vaccine-how-it-works-1080p.mp4` |
 | 中文旁白腳本 + 英文翻譯 | `script.json`（時間碼版本在 `timeline.json`） |
-| 旁白 / 音樂 / 混音 | `audio/narration.*`、`audio/music.m4a`、`audio/mix.*` |
+| 旁白 / 音樂 / 混音 | `audio/narration.mp3`、`audio/music.mp3`、`audio/mix.mp3` |
 | QA 截圖（每章 3 張） | `shots/` |
 
 ## 本機播放互動網頁
 
 ```bash
 cd vaccine-animation
-python3 -m http.server 8000   # 然後開 http://localhost:8000
+npx http-server -p 8000   # 然後開 http://localhost:8000
 ```
-（網頁用 `fetch` 讀 `timeline.json`，所以需要透過 http 開啟，不能直接雙擊檔案。）
+（網頁用 `fetch` 讀 `timeline.json`，所以需要透過 http 開啟，不能直接雙擊檔案。
+請用支援 Range 請求的伺服器（如 http-server、GitHub Pages）；Python 內建的 `http.server` 不支援，拖動進度或跳章節時聲音會回到開頭。）
 
 ## 製作流程（可重跑）
 

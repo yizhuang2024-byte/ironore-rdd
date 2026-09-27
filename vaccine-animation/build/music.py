@@ -118,7 +118,8 @@ json.dump({"t": [round(i / 20, 2) for i in range(int(DUR * 20))],
            "g": [round(float(gain[int(i / 20 * SR)]), 3) for i in range(int(DUR * 20))]},
           open(os.path.join(ROOT, "audio", "duck.json"), "w"))
 ff = imageio_ffmpeg.get_ffmpeg_exe()
-for src, dst in (("mix.wav", "mix.m4a"), ("narration.wav", "narration.m4a"), ("music_raw.wav", "music.m4a")):
-    subprocess.run([ff, "-y", "-loglevel", "error", "-i", os.path.join(ROOT, "audio", src), "-c:a", "aac", "-b:a", "160k",
+for src, dst in (("mix.wav", "mix.mp3"), ("narration.wav", "narration.mp3"), ("music_raw.wav", "music.mp3")):
+    # MP3 plays in every browser (open-source Chromium builds can't decode AAC)
+    subprocess.run([ff, "-y", "-loglevel", "error", "-i", os.path.join(ROOT, "audio", src), "-c:a", "libmp3lame", "-b:a", "160k",
                     os.path.join(ROOT, "audio", dst)], check=True)
 print("ok", DUR)
