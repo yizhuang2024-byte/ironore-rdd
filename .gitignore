@@ -26,3 +26,6 @@ dist-ssr
 # video build intermediates
 video/build/
 __pycache__/
+research_package/*.zip
+research_package/**/*.mp4
+research_package/**/screenshots/
