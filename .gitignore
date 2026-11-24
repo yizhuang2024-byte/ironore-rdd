@@ -25,3 +25,4 @@ dist-ssr
 
 # video build intermediates
 video/build/
+__pycache__/
