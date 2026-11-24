@@ -1,0 +1,125 @@
+1
+00:00:01,600 --> 00:00:05,842
+西澳皮爾巴拉，紅土山脈一路綿延到印度洋。
+The Pilbara, Western Australia: red ranges running to the Indian Ocean.
+
+2
+00:00:06,242 --> 00:00:09,942
+這裡的鐵礦石，撐起了全世界的鋼鐵。
+Its iron ore holds up much of the world's steel.
+
+3
+00:00:16,892 --> 00:00:21,437
+約西元前3200年，埃及人用隕鐵打成珠子。
+Around 3200 BC, Egyptians hammered meteoritic iron into beads.
+
+4
+00:00:21,837 --> 00:00:26,643
+約西元前1200年，冶鐵擴散，鐵器時代展開。
+From about 1200 BC, iron smelting spread and the Iron Age began.
+
+5
+00:00:27,043 --> 00:00:31,822
+1856年，貝塞麥煉鋼法讓鋼材首次能大量生產。
+In 1856, the Bessemer process made mass-produced steel possible.
+
+6
+00:00:33,672 --> 00:00:38,820
+1952年，漢考克自述在飛機上發現皮爾巴拉鐵礦。
+In 1952, Lang Hancock said he spotted Pilbara ore from his plane.
+
+7
+00:00:39,220 --> 00:00:44,204
+1960年，澳洲部分解除1938年起的出口禁令。
+In 1960, Australia partly lifted an export ban in place since 1938.
+
+8
+00:00:46,054 --> 00:00:51,598
+美國地質調查局估計，2025年澳洲產量約9.8億噸。
+USGS estimates Australia mined about 980 million tonnes in 2025.
+
+9
+00:00:51,998 --> 00:00:56,218
+居全球第一，約占全球26億噸的三成八。
+The world's largest, about 38% of the 2.6 billion tonne total.
+
+10
+00:00:56,618 --> 00:01:01,838
+黑德蘭港一年吞吐約5.78億噸，98.5%是鐵礦。
+Port Hedland handled 577.7 Mt in 2024-25; 98.5% was iron ore.
+
+11
+00:01:02,238 --> 00:01:07,387
+最大買家在中國，2024年中國粗鋼產量逾10億噸。
+China is the main buyer; it made over 1 billion tonnes of steel in 2024.
+
+12
+00:01:09,237 --> 00:01:15,112
+世界銀行數據：2013年鐵礦石年均價約135美元。
+World Bank data: iron ore averaged about US$135/t in 2013.
+
+13
+00:01:15,512 --> 00:01:21,380
+中國需求放緩、供給大增，2015年底跌到40.5美元。
+Slowing Chinese demand and rising supply cut it to US$40.5 by Dec 2015.
+
+14
+00:01:21,780 --> 00:01:27,886
+2019年巴西淡水河谷尾礦壩潰決，供給吃緊，價格回升。
+In 2019, Vale's Brumadinho dam collapse tightened supply; prices rose.
+
+15
+00:01:28,286 --> 00:01:33,124
+2021年6月，月均價衝上214.4美元。
+In June 2021, the monthly average hit US$214.4.
+
+16
+00:01:33,524 --> 00:01:38,154
+到了2026年10月，回落到每噸90.8美元。
+By October 2026, it had eased to US$90.8 per tonne.
+
+17
+00:01:40,004 --> 00:01:44,777
+皮爾巴拉海岸，是澳洲最常遭熱帶氣旋侵襲的地方。
+The Pilbara coast is Australia's most cyclone-prone region.
+
+18
+00:01:45,177 --> 00:01:50,568
+2019年氣旋韋羅妮卡，力拓估計減產約1,400萬噸。
+2019, Cyclone Veronica: Rio Tinto estimated a ~14 Mt production loss.
+
+19
+00:01:50,968 --> 00:01:56,030
+2023年氣旋伊爾莎，黑德蘭港暫停裝船約兩天。
+2023, Cyclone Ilsa: Port Hedland stopped loading for about two days.
+
+20
+00:01:56,430 --> 00:02:01,775
+2025年第一季，四個氣旋讓力拓損失約1,300萬噸。
+Q1 2025: four cyclones cost Rio Tinto about 13 Mt of shipments.
+
+21
+00:02:02,175 --> 00:02:07,788
+2026年第一季，氣旋米契爾與娜瑞兒再影響約800萬噸。
+Q1 2026: Cyclones Mitchell and Narelle hit about 8 Mt more.
+
+22
+00:02:09,638 --> 00:02:14,617
+幾內亞西芒杜礦已出貨，規劃年產能1.2億噸。
+Guinea's Simandou has begun shipping; planned capacity 120 Mt a year.
+
+23
+00:02:15,017 --> 00:02:20,371
+澳洲政府預估，2031年實質價格約降至64美元。
+Australia's government forecasts ~US$64/t in real terms by 2031.
+
+24
+00:02:20,771 --> 00:02:26,330
+綠色煉鋼常需含鐵67%以上的礦，皮爾巴拉正尋求升級。
+Green DRI steel often needs ore above 67% Fe; the Pilbara seeks upgrades.
+
+25
+00:02:28,480 --> 00:02:33,647
+從一顆隕鐵珠到萬噸巨輪，鐵礦石始終伴著人類前行。
+From a meteorite bead to giant ore carriers, iron has walked beside us.
+

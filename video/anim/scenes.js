@@ -52,14 +52,14 @@ function sceneTitle(t, lt, D, sc) {
   C = DAY;
   let s = '';
   s += clouds(lt, [[0, 120, 0.8, 20], [900, 90, 0.7, 14], [1500, 160, 0.9, 24]], es(lt, 0, 0.8));
-  s += P(rect(300, 250, 1320, 500), es(lt, 0.0, 1.2), { w: 3 }) + P(rect(318, 268, 1284, 464), es(lt, 0.3, 1.5), { w: 1.4, op: 0.7 });
-  for (const [cx, cy] of [[300, 250], [1620, 250], [300, 750], [1620, 750]]) s += P(circ(cx, cy, 12), es(lt, 1.0, 1.6), { w: 2.4, stroke: C.gold, occ: true });
+  s += P(rect(300, 250, 1320, 500), es(lt, 0.0, 0.9), { w: 3 }) + P(rect(318, 268, 1284, 464), es(lt, 0.2, 1.1), { w: 1.4, op: 0.7 });
+  for (const [cx, cy] of [[300, 250], [1620, 250], [300, 750], [1620, 750]]) s += P(circ(cx, cy, 12), es(lt, 0.8, 1.3), { w: 2.4, stroke: C.gold, occ: true });
   const [tz, sz, te, se] = TL.title;
-  s += T(960, 450, tz, { size: 112, anchor: 'middle', weight: 700, p: es(lt, 0.5, 2.0) });
-  s += P(smooth([[560, 485], [800, 495], [1100, 488], [1360, 492]]), es(lt, 1.6, 2.4), { w: 3, stroke: C.gold });
-  s += T(960, 560, sz, { size: 46, anchor: 'middle', p: es(lt, 1.6, 2.8) });
-  s += T(960, 630, te, { size: 40, anchor: 'middle', italic: true, p: es(lt, 2.0, 3.2) });
-  s += T(960, 680, se, { size: 28, anchor: 'middle', italic: true, p: es(lt, 2.4, 3.6), fill: C.ink2 });
+  s += T(960, 450, tz, { size: 112, anchor: 'middle', weight: 700, p: es(lt, 0.3, 1.4) });
+  s += P(smooth([[560, 485], [800, 495], [1100, 488], [1360, 492]]), es(lt, 1.1, 1.7), { w: 3, stroke: C.gold });
+  s += T(960, 560, sz, { size: 46, anchor: 'middle', p: es(lt, 1.0, 1.9) });
+  s += T(960, 630, te, { size: 40, anchor: 'middle', italic: true, p: es(lt, 1.3, 2.2) });
+  s += T(960, 680, se, { size: 28, anchor: 'middle', italic: true, p: es(lt, 1.6, 2.5), fill: C.ink2 });
   // anvil & hammer
   s += P(line(-100, 1000, 2100, 1000), 1, { w: 2.4 });
   s += smoke(820, 960, lt, { n: 4, life: 3, rise: 90, r0: 6, r1: 20, seed: 21, op: 0.6 });

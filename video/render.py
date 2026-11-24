@@ -68,8 +68,16 @@ async def video(workers):
     print("frames", NFRAMES)
 
 
+async def patch(a, b):
+    """re-render frames [a, b) only, as build/seg_99.mp4"""
+    p = await segment(99, a, b)
+    print("patched", a, b, p)
+
+
 if __name__ == "__main__":
-    if sys.argv[1] == "stills":
+    if sys.argv[1] == "patch":
+        asyncio.run(patch(int(sys.argv[2]), int(sys.argv[3])))
+    elif sys.argv[1] == "stills":
         asyncio.run(stills([float(x) for x in sys.argv[2:]]))
     else:
         asyncio.run(video(int(sys.argv[2]) if len(sys.argv) > 2 else 4))
