@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
-"""用離線語音模型（sherpa-onnx + Kokoro 中文女聲）產生旁白，並計算字幕時間軸。
+"""產生旁白（台灣女聲 edge-tts，或離線 Kokoro 中文女聲），並計算字幕時間軸。
 
-用法: python3 make_audio.py <模型資料夾> <輸出資料夾>
+用法:
+  python3 make_audio.py edge <輸出資料夾>        # 台灣女聲 zh-TW-HsiaoChenNeural（需連線 speech.platform.bing.com）
+  python3 make_audio.py <Kokoro模型資料夾> <輸出資料夾>  # 離線中文女聲
 """
+import asyncio
 import json
 import os
+import subprocess
 import sys
 
 import numpy as np
-import sherpa_onnx
 import soundfile as sf
 
 from script import SCENES
@@ -21,6 +24,7 @@ TAIL = 1.0           # 場景結尾留白
 
 
 def build_tts(m):
+    import sherpa_onnx
     j = lambda f: os.path.join(m, f)
     cfg = sherpa_onnx.OfflineTtsConfig(
         model=sherpa_onnx.OfflineTtsModelConfig(
@@ -34,6 +38,45 @@ def build_tts(m):
     return sherpa_onnx.OfflineTts(cfg)
 
 
+EDGE_VOICE = "zh-TW-HsiaoChenNeural"
+EDGE_RATE = "-3%"
+
+
+class EdgeTTS:
+    """以 edge-tts 產生台灣女聲，回傳與 sherpa-onnx 相同介面的結果。"""
+    sample_rate = 24000
+
+    def generate(self, say, sid=None, speed=None):
+        import edge_tts
+        proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
+
+        async def run():
+            buf = b""
+            for attempt in range(4):
+                try:
+                    com = edge_tts.Communicate(say, EDGE_VOICE, rate=EDGE_RATE, proxy=proxy)
+                    buf = b""
+                    async for ch in com.stream():
+                        if ch["type"] == "audio":
+                            buf += ch["data"]
+                    return buf
+                except Exception as e:  # 網路偶發錯誤重試
+                    print("retry", attempt, e, flush=True)
+                    await asyncio.sleep(2 * (attempt + 1))
+            raise RuntimeError("edge-tts failed")
+
+        mp3 = asyncio.run(run())
+        pcm = subprocess.run(["ffmpeg", "-v", "error", "-i", "-", "-f", "f32le", "-ac", "1", "-ar", "24000", "-"],
+                             input=mp3, capture_output=True, check=True).stdout
+
+        class R:
+            pass
+        r = R()
+        r.samples = np.frombuffer(pcm, dtype=np.float32)
+        r.sample_rate = 24000
+        return r
+
+
 def trim(x, thr=0.01):
     idx = np.where(np.abs(x) > thr)[0]
     if len(idx) == 0:
@@ -45,7 +88,7 @@ def trim(x, thr=0.01):
 
 def main(model_dir, out):
     os.makedirs(out, exist_ok=True)
-    tts = build_tts(model_dir)
+    tts = EdgeTTS() if model_dir == "edge" else build_tts(model_dir)
     sr = None
     pieces = []
     timeline = []

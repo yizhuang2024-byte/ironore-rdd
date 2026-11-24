@@ -646,7 +646,7 @@ def sc_sources(t, sc):
     for i, s in enumerate(SOURCES):
         kk = appear(t, 0.4 + i * 0.25)
         text(d, (200, 260 + i * 82), "・" + s, 34, fade(WHITE, kk, NAVY), "la")
-    text(d, (W / 2, 990), "旁白：AI 語音合成（女聲）　字幕：繁體中文", 30, fade(GREY, k, NAVY), "mm")
+    text(d, (W / 2, 990), "旁白：AI 語音合成（台灣女聲 曉臻）　字幕：繁體中文", 30, fade(GREY, k, NAVY), "mm")
     return img
 
 
