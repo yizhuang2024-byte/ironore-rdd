@@ -1,0 +1,264 @@
+{
+ "title_zh": "紅土上的鋼鐵脈動",
+ "subtitle_zh": "鐵礦石的歷史、澳洲產地與價格波動",
+ "title_en": "The Pulse of Steel on Red Earth",
+ "subtitle_en": "Iron ore: history, Australian supply and price swings",
+ "voice": "zh-TW-HsiaoChenNeural",
+ "lines": [
+  {
+   "id": 1,
+   "scene": "open",
+   "src": [
+    "S12"
+   ],
+   "zh": "西澳皮爾巴拉，紅土山脈一路綿延到印度洋。",
+   "en": "The Pilbara, Western Australia: red ranges running to the Indian Ocean.",
+   "sub": "西澳皮爾巴拉，紅土山脈一路綿延到印度洋。"
+  },
+  {
+   "id": 2,
+   "scene": "open",
+   "src": [
+    "S2"
+   ],
+   "zh": "這裡的鐵礦石，撐起了全世界的鋼鐵。",
+   "en": "Its iron ore holds up much of the world's steel.",
+   "sub": "這裡的鐵礦石，撐起了全世界的鋼鐵。"
+  },
+  {
+   "id": 3,
+   "scene": "history",
+   "src": [
+    "S5"
+   ],
+   "zh": "約西元前三千二百年，埃及人用隕鐵打成珠子。",
+   "en": "Around 3200 BC, Egyptians hammered meteoritic iron into beads.",
+   "sub": "約西元前3200年，埃及人用隕鐵打成珠子。"
+  },
+  {
+   "id": 4,
+   "scene": "history",
+   "src": [
+    "S6"
+   ],
+   "zh": "約西元前一千二百年，冶鐵擴散，鐵器時代展開。",
+   "en": "From about 1200 BC, iron smelting spread and the Iron Age began.",
+   "sub": "約西元前1200年，冶鐵擴散，鐵器時代展開。"
+  },
+  {
+   "id": 5,
+   "scene": "history",
+   "src": [
+    "S7"
+   ],
+   "zh": "一八五六年，貝塞麥煉鋼法讓鋼材首次能大量生產。",
+   "en": "In 1856, the Bessemer process made mass-produced steel possible.",
+   "sub": "1856年，貝塞麥煉鋼法讓鋼材首次能大量生產。"
+  },
+  {
+   "id": 6,
+   "scene": "discovery",
+   "src": [
+    "S8",
+    "S9"
+   ],
+   "zh": "一九五二年，漢考克自述在飛機上發現皮爾巴拉鐵礦。",
+   "en": "In 1952, Lang Hancock said he spotted Pilbara ore from his plane.",
+   "sub": "1952年，漢考克自述在飛機上發現皮爾巴拉鐵礦。"
+  },
+  {
+   "id": 7,
+   "scene": "discovery",
+   "src": [
+    "S8"
+   ],
+   "zh": "一九六〇年，澳洲部分解除一九三八年起的出口禁令。",
+   "en": "In 1960, Australia partly lifted an export ban in place since 1938.",
+   "sub": "1960年，澳洲部分解除1938年起的出口禁令。"
+  },
+  {
+   "id": 8,
+   "scene": "production",
+   "src": [
+    "S2"
+   ],
+   "zh": "美國地質調查局估計，二〇二五年澳洲產量約九億八千萬噸。",
+   "en": "USGS estimates Australia mined about 980 million tonnes in 2025.",
+   "sub": "美國地質調查局估計，2025年澳洲產量約9.8億噸。"
+  },
+  {
+   "id": 9,
+   "scene": "production",
+   "src": [
+    "S2"
+   ],
+   "zh": "居全球第一，約占全球二十六億噸的三成八。",
+   "en": "The world's largest, about 38% of the 2.6 billion tonne total.",
+   "sub": "居全球第一，約占全球26億噸的三成八。"
+  },
+  {
+   "id": 10,
+   "scene": "production",
+   "src": [
+    "S10"
+   ],
+   "zh": "黑德蘭港一年吞吐約五億七千八百萬噸，九成八是鐵礦。",
+   "en": "Port Hedland handled 577.7 Mt in 2024-25; 98.5% was iron ore.",
+   "sub": "黑德蘭港一年吞吐約5.78億噸，98.5%是鐵礦。"
+  },
+  {
+   "id": 11,
+   "scene": "production",
+   "src": [
+    "S11"
+   ],
+   "zh": "最大買家在中國，二〇二四年中國粗鋼產量逾十億噸。",
+   "en": "China is the main buyer; it made over 1 billion tonnes of steel in 2024.",
+   "sub": "最大買家在中國，2024年中國粗鋼產量逾10億噸。"
+  },
+  {
+   "id": 12,
+   "scene": "price",
+   "src": [
+    "S1"
+   ],
+   "zh": "世界銀行數據：二〇一三年鐵礦石年均價約一百三十五美元。",
+   "en": "World Bank data: iron ore averaged about US$135/t in 2013.",
+   "sub": "世界銀行數據：2013年鐵礦石年均價約135美元。"
+  },
+  {
+   "id": 13,
+   "scene": "price",
+   "src": [
+    "S1",
+    "S13"
+   ],
+   "zh": "中國需求放緩、供給大增，二〇一五年底跌到四十點五美元。",
+   "en": "Slowing Chinese demand and rising supply cut it to US$40.5 by Dec 2015.",
+   "sub": "中國需求放緩、供給大增，2015年底跌到40.5美元。"
+  },
+  {
+   "id": 14,
+   "scene": "price",
+   "src": [
+    "S14"
+   ],
+   "zh": "二〇一九年巴西淡水河谷尾礦壩潰決，供給吃緊，價格回升。",
+   "en": "In 2019, Vale's Brumadinho dam collapse tightened supply; prices rose.",
+   "sub": "2019年巴西淡水河谷尾礦壩潰決，供給吃緊，價格回升。"
+  },
+  {
+   "id": 15,
+   "scene": "price",
+   "src": [
+    "S1",
+    "S15"
+   ],
+   "zh": "二〇二一年六月，月均價衝上兩百一十四點四美元。",
+   "en": "In June 2021, the monthly average hit US$214.4.",
+   "sub": "2021年6月，月均價衝上214.4美元。"
+  },
+  {
+   "id": 16,
+   "scene": "price",
+   "src": [
+    "S1"
+   ],
+   "zh": "到了二〇二六年十月，回落到每噸九十點八美元。",
+   "en": "By October 2026, it had eased to US$90.8 per tonne.",
+   "sub": "到了2026年10月，回落到每噸90.8美元。"
+  },
+  {
+   "id": 17,
+   "scene": "cyclone",
+   "src": [
+    "S16",
+    "S17"
+   ],
+   "zh": "皮爾巴拉海岸，是澳洲最常遭熱帶氣旋侵襲的地方。",
+   "en": "The Pilbara coast is Australia's most cyclone-prone region.",
+   "sub": "皮爾巴拉海岸，是澳洲最常遭熱帶氣旋侵襲的地方。"
+  },
+  {
+   "id": 18,
+   "scene": "cyclone",
+   "src": [
+    "S18",
+    "S19"
+   ],
+   "zh": "二〇一九年氣旋韋羅妮卡，力拓估計減產約一千四百萬噸。",
+   "en": "2019, Cyclone Veronica: Rio Tinto estimated a ~14 Mt production loss.",
+   "sub": "2019年氣旋韋羅妮卡，力拓估計減產約1,400萬噸。"
+  },
+  {
+   "id": 19,
+   "scene": "cyclone",
+   "src": [
+    "S20"
+   ],
+   "zh": "二〇二三年氣旋伊爾莎，黑德蘭港暫停裝船約兩天。",
+   "en": "2023, Cyclone Ilsa: Port Hedland stopped loading for about two days.",
+   "sub": "2023年氣旋伊爾莎，黑德蘭港暫停裝船約兩天。"
+  },
+  {
+   "id": 20,
+   "scene": "cyclone",
+   "src": [
+    "S21"
+   ],
+   "zh": "二〇二五年第一季，四個氣旋讓力拓損失約一千三百萬噸。",
+   "en": "Q1 2025: four cyclones cost Rio Tinto about 13 Mt of shipments.",
+   "sub": "2025年第一季，四個氣旋讓力拓損失約1,300萬噸。"
+  },
+  {
+   "id": 21,
+   "scene": "cyclone",
+   "src": [
+    "S22",
+    "S23"
+   ],
+   "zh": "二〇二六年第一季，氣旋米契爾與娜瑞兒再影響約八百萬噸。",
+   "en": "Q1 2026: Cyclones Mitchell and Narelle hit about 8 Mt more.",
+   "sub": "2026年第一季，氣旋米契爾與娜瑞兒再影響約800萬噸。"
+  },
+  {
+   "id": 22,
+   "scene": "future",
+   "src": [
+    "S24"
+   ],
+   "zh": "幾內亞西芒杜礦已出貨，規劃年產能一億兩千萬噸。",
+   "en": "Guinea's Simandou has begun shipping; planned capacity 120 Mt a year.",
+   "sub": "幾內亞西芒杜礦已出貨，規劃年產能1.2億噸。"
+  },
+  {
+   "id": 23,
+   "scene": "future",
+   "src": [
+    "S3",
+    "S4"
+   ],
+   "zh": "澳洲政府預估，二〇三一年實質價格約降至六十四美元。",
+   "en": "Australia's government forecasts ~US$64/t in real terms by 2031.",
+   "sub": "澳洲政府預估，2031年實質價格約降至64美元。"
+  },
+  {
+   "id": 24,
+   "scene": "future",
+   "src": [
+    "S25"
+   ],
+   "zh": "綠色煉鋼常需含鐵六成七以上的礦，皮爾巴拉正尋求升級。",
+   "en": "Green DRI steel often needs ore above 67% Fe; the Pilbara seeks upgrades.",
+   "sub": "綠色煉鋼常需含鐵67%以上的礦，皮爾巴拉正尋求升級。"
+  },
+  {
+   "id": 25,
+   "scene": "closing",
+   "src": [],
+   "zh": "從一顆隕鐵珠到萬噸巨輪，鐵礦石始終伴著人類前行。",
+   "en": "From a meteorite bead to giant ore carriers, iron has walked beside us.",
+   "sub": "從一顆隕鐵珠到萬噸巨輪，鐵礦石始終伴著人類前行。"
+  }
+ ]
+}
